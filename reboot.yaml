@@ -1,0 +1,10 @@
+---
+- name: Reboot microbolt nodes
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Reboot the nodes (and wait upto 5min max)
+      become: true
+      reboot:
+        reboot_command: "{{ custom_reboot_command | default(omit) }}"
+        reboot_timeout: 300
