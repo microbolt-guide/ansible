@@ -1,0 +1,10 @@
+---
+- name: Update repositories and update package apk-tools to latest version
+  community.general.apk:
+    name: apk-tools
+    state: latest
+    update_cache: true
+
+- name: Update all installed packages to the latest versions
+  community.general.apk:
+    upgrade: true
