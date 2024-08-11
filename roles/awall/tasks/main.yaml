@@ -11,6 +11,22 @@
     state: present
     persistent: present
 
+- name: Make iptables start on boot
+  ansible.builtin.service:
+    name: iptables
+    enabled: true
+
+- name: Add the ip6_tables module and make sure it is loaded after reboots
+  community.general.modprobe:
+    name: ip6_tables
+    state: present
+    persistent: present
+
+- name: Make ip6tables start on boot
+  ansible.builtin.service:
+    name: ip6tables
+    enabled: true
+
 - name: Deploy awall base configuration
   ansible.builtin.template:
     src: templates/base-config.j2
