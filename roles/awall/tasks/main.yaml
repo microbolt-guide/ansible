@@ -1,0 +1,34 @@
+---
+- name: Install awall
+  community.general.apk:
+    name: awall,iptables,ip6tables
+    state: latest
+    update_cache: true
+
+- name: Add the ip_tables module and make sure it is loaded after reboots
+  community.general.modprobe:
+    name: ip_tables
+    state: present
+    persistent: present
+
+- name: Deploy awall base configuration
+  ansible.builtin.template:
+    src: templates/base-config.j2
+    dest: /etc/awall/optional/base-config.json
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Deploy awall ssh configuration
+  ansible.builtin.template:
+    src: templates/ssh.j2
+    dest: /etc/awall/optional/ssh.json
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable base-config and ssh policy
+  community.general.awall:
+    name: [ base-config ssh ]
+    state: enabled
+    activate: true

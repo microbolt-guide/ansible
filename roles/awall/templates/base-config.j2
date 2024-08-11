@@ -1,0 +1,13 @@
+{
+  "description": "Base zones and policies",
+
+  "zone": {
+    "internet": { "iface": "{{ ethernet }}" }
+  },
+
+  "policy": [
+     { "in": "internet", "action": "drop" },
+     { "out": "internet", "action": "accept" }
+  ]
+
+}
