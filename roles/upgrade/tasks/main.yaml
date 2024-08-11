@@ -8,3 +8,12 @@
 - name: Update all installed packages to the latest versions
   community.general.apk:
     upgrade: true
+
+- name: Reboot the system
+  reboot:
+    connect_timeout: 5
+    reboot_command: "{{ custom_reboot_command | default(omit) }}"
+    reboot_timeout: 600
+    pre_reboot_delay: 0
+    post_reboot_delay: 30
+    test_command: uptime
