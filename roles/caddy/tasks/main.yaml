@@ -1,0 +1,12 @@
+---
+- name: Install caddy
+  community.general.apk:
+    name: caddy
+    state: latest
+    update_cache: true
+
+- name: Make caddy start on boot
+  ansible.builtin.service:
+    name: caddy
+    enabled: true
+    state: started
