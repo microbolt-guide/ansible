@@ -1,0 +1,69 @@
+---
+- name: Install nginx
+  community.general.apk:
+    name: nginx,nginx-mod-stream,py3-cryptography
+    state: latest
+    update_cache: true
+
+- name: Generate a private key
+  become: true
+  community.crypto.openssl_privatekey:
+    path: /etc/ssl/private/nginx-selfsigned.key
+    type: RSA
+    size: 4096
+
+- name: Generate root CSR
+  become: true
+  community.crypto.openssl_csr:
+    path: /tmp/nginx-selfsigned.csr
+    privatekey_path: /etc/ssl/private/nginx-selfsigned.key
+    common_name: "localhost"
+
+- name: Read CSR content
+  become: true
+  ansible.builtin.slurp:
+    src: /tmp/nginx-selfsigned.csr
+  register: csr_result
+
+- name: Generate a self-signed certificate
+  become: true
+  community.crypto.x509_certificate:
+    path: /etc/ssl/certs/nginx-selfsigned.crt
+    privatekey_path: /etc/ssl/private/nginx-selfsigned.key
+    provider: selfsigned
+    select_crypto_backend: cryptography
+    selfsigned_not_after: "+3650d"
+    csr_content: "{{ csr_result.content | b64decode }}"
+
+- name: Backup the default nginx configuration
+  ansible.builtin.copy:
+    src: /etc/nginx/nginx.conf
+    dest: /etc/nginx/nginx.conf.bak
+    remote_src: true
+
+- name: Deploy the reverse proxy configuration
+  ansible.builtin.template:
+    src: templates/nginx.j2
+    dest: /etc/nginx/nginx.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create directories for the reverse proxy
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: '0755'
+  loop:
+    - /etc/nginx/sites-available
+    - /etc/nginx/sites-enabled
+    - /etc/nginx/streams-available
+    - /etc/nginx/streams-enabled
+  loop_control:
+    label: "{{ item }}"
+
+- name: Make nginx start on boot
+  ansible.builtin.service:
+    name: nginx
+    enabled: true
+    state: started
