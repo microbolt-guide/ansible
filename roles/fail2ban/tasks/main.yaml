@@ -1,0 +1,12 @@
+---
+- name: Install fail2ban
+  community.general.apk:
+    name: fail2ban
+    state: latest
+    update_cache: true
+
+- name: Make fail2ban start on boot
+  ansible.builtin.service:
+    name: fail2ban
+    enabled: true
+    state: started
