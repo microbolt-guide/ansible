@@ -1,0 +1,8 @@
+ethernet: eth0
+
+firewall_role: awall # awall or ufw
+reverse_proxy_role: caddy # caddy or nginx
+bitcoin_role: knots # knots or core
+electrum_role: fulcrum # fulcrum or electrs
+explorer_role: btcrpc # btcrpc or mempool
+lightning_role: lnd # lnd or c-lightning
