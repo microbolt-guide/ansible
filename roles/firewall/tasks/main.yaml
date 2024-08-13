@@ -1,0 +1,6 @@
+---
+- include_tasks: awall.yaml
+  when: firewall_role == 'awall'
+
+- include_tasks: ufw.yaml
+  when: firewall_role == 'ufw'

@@ -1,0 +1,6 @@
+---
+- include_tasks: caddy.yaml
+  when: reverse_proxy_role == 'caddy'
+
+- include_tasks: nginx.yaml
+  when: reverse_proxy_role == 'nginx'
