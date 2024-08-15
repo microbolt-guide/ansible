@@ -2,6 +2,7 @@ ethernet: eth0
 
 firewall_role: awall # awall or ufw
 reverse_proxy_role: caddy # caddy or nginx
+ssh_tor: false
 bitcoin_role: knots # knots or core
 electrum_role: fulcrum # fulcrum or electrs
 explorer_role: btcrpc # btcrpc or mempool

@@ -1,0 +1,101 @@
+---
+- name: Create tor system group
+  ansible.builtin.group:
+    system: true
+    name: tor
+    state: present
+
+- name: Create tor system user
+  ansible.builtin.user:
+    system: true
+    password: "!"
+    create_home: false
+    home: /var/lib/tor
+    shell: /sbin/nologin
+    group: tor
+    comment: "tor"
+    name: tor
+    state: present
+
+- name: Install tor
+  community.general.apk:
+    name: tor
+    state: latest
+    update_cache: true
+
+- name: Copy torrc.sample to torrc
+  ansible.builtin.copy:
+    src: /etc/tor/torrc.sample
+    dest: /etc/tor/torrc
+    remote_src: yes
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Ensure ControlPort is uncommented and set to 9051
+  ansible.builtin.lineinfile:
+    path: /etc/tor/torrc
+    regexp: '^#?ControlPort'
+    line: 'ControlPort 9051'
+    state: present
+
+- name: Ensure CookieAuthentication is uncommented and set to 1
+  ansible.builtin.lineinfile:
+    path: /etc/tor/torrc
+    regexp: '^#?CookieAuthentication'
+    line: 'CookieAuthentication 1'
+    state: present
+
+- name: Add additional Tor configuration
+  ansible.builtin.blockinfile:
+    path: /etc/tor/torrc
+    insertafter: '^CookieAuthentication 1'
+    block: |
+      CookieAuthFile /var/lib/tor/control_auth_cookie
+      CookieAuthFileGroupReadable 1
+      DataDirectoryGroupReadable 1
+
+- name: Make tor start on boot
+  ansible.builtin.service:
+    name: tor
+    enabled: true
+    state: started
+
+- block:
+    - name: Add Hidden Service SSH server configuration
+      ansible.builtin.blockinfile:
+        path: /etc/tor/torrc
+        insertafter: '## This section is just for location-hidden services ##'
+        block: |
+          # Hidden Service SSH server
+          HiddenServiceDir /var/lib/tor/ssh/
+          HiddenServiceVersion 3
+          HiddenServicePoWDefensesEnabled 1
+          HiddenServicePort 22 127.0.0.1:22
+
+    - name: Reload Tor service to apply configuration
+      ansible.builtin.service:
+        name: tor
+        state: reloaded
+
+    - name: Get the SSH Onion address
+      ansible.builtin.command:
+        cmd: cat /var/lib/tor/ssh/hostname
+      register: ssh_onion_address
+
+    - name: Display SSH Onion address
+      ansible.builtin.debug:
+        msg: "SSH Onion address: {{ ssh_onion_address.stdout }}"
+  when: ssh_tor
+
+- name: Install i2p
+  community.general.apk:
+    name: i2pd
+    state: latest
+    update_cache: true
+
+- name: Make i2p start on boot
+  ansible.builtin.service:
+    name: i2pd
+    enabled: true
+    state: started
