@@ -1,0 +1,29 @@
+---
+- name: Install make dependencies
+  ansible.builtin.apk:
+    name: "{{ item }}"
+    state: latest
+    update_cache: true
+  loop:
+    - autoconf
+    - automake
+    - boost-dev
+    - clang
+    - chrpath
+    - file
+    - libevent-dev
+    - libtool
+    - make
+    - pkgconf
+    - zeromq-dev
+
+- name: Install runtime dependencies
+  ansible.builtin.apk:
+    name: "{{ item }}"
+    state: latest
+    update_cache: true
+  loop:
+    - libevent
+    - libsodium
+    - libstdc++
+    - libzmq
