@@ -1,7 +1,7 @@
 ---
-- name: Install curl and fail2ban
+- name: Install dependencies
   community.general.apk:
-    name: curl,fail2ban
+    name: curl,fail2ban,gnupg
     state: latest
     update_cache: true
 
