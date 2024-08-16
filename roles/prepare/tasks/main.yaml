@@ -1,7 +1,7 @@
 ---
-- name: Install fail2ban
+- name: Install curl and fail2ban
   community.general.apk:
-    name: fail2ban
+    name: curl,fail2ban
     state: latest
     update_cache: true
 
