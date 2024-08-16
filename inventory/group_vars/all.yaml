@@ -1,3 +1,24 @@
 ansible_user: satoshi
 ansible_become: true
 ansible_become_method: doas
+
+env_vars:
+  CC: "clang"
+  CXX: "{{ env_vars.CC }}++"
+  CFLAGS: "-O3 -pipe -march=native -fPIE"
+  CXXFLAGS: "{{ env_vars.CFLAGS }}"
+  LDFLAGS: "-pie -Wl,--as-needed"
+  MAKEFLAGS: "-j$(nproc)"
+
+bitcoin_base_url: >-
+  {%- if bitcoin_role == 'core' -%}
+    https://bitcoin{{ bitcoin_role }}.org/bin/bitcoin-{{ bitcoin_role }}-{{ bitcoin_version }}
+  {%- elif bitcoin_role == 'knots' -%}
+    https://bitcoin{{ bitcoin_role }}.org/files/{{ bitcoin_version | regex_replace('\..*$', '') }}.x/{{ bitcoin_version }}
+  {%- endif -%}
+bitcoin_keys_url: |
+  {%- if bitcoin_role == 'core' -%}
+    https://api.github.com/repositories/355107265/contents/builder-keys
+  {%- elif bitcoin_role == 'knots' -%}
+    https://api.github.com/repos/bitcoinknots/guix.sigs/contents/builder-keys
+  {%- endif -%}
