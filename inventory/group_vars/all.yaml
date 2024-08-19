@@ -1,10 +1,13 @@
 ---
+# Ansible options
 ansible_user: satoshi
 ansible_become: true
 ansible_become_method: doas
 
+# System options
 ethernet: eth0
 
+# Compile options
 env_vars:
   CC: "clang"
   CXX: "clang++"
@@ -13,18 +16,26 @@ env_vars:
   LDFLAGS: "-pie -Wl,--as-needed"
   MAKEFLAGS: "-j$(nproc)"
 
+# Microbolt options
 firewall_role: awall # awall or ufw
 reverse_proxy_role: caddy # caddy or nginx
-ssh_tor: false
 bitcoin_role: knots # knots or core
 electrum_role: fulcrum # fulcrum or electrs
 explorer_role: btcrpc # btcrpc or mempool
 lightning_role: lnd # lnd or c-lightning
 
+# Tor options
+ssh_tor: false
+electrum_tor: false
+
+# Bitcoin options
 bitcoin_man: false
 bitcoin_rpc_username: microbolt
 bitcoin_rpc_password: passwd
 bitcoin_dbcache: 32768
+
+# Electrum options
+electrum_port_ssl: 50002
 
 bitcoin_base_url: >-
   {%- if bitcoin_role == 'knots' -%}
@@ -38,7 +49,6 @@ bitcoin_keys_url: >-
   {%- elif bitcoin_role == 'core' -%}
     https://api.github.com/repositories/355107265/contents/builder-keys
   {%- endif -%}
-
 bitcoin_config_options:
   - assumevalid=0
   - blockfilterindex=1
@@ -58,3 +68,11 @@ bitcoin_config_options:
   - server=1
 
 fulcrum_keys_url: https://raw.githubusercontent.com/Electron-Cash/keys-n-hashes/master/pubkeys/calinkey.txt
+fulcrum_config_options:
+  - "#datadir = /path/to/a/dir"
+  - "#rpcuser = Bob_The_Banker"
+  - "#rpcpassword = hunter1"
+  - "rpccookie = /var/lib/bitcoind/.cookie"
+  - "tcp = 0.0.0.0:50001"
+  - "banner = /etc/fulcrum/banner.txt"
+  - "peering = false"

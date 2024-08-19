@@ -1,0 +1,14 @@
+---
+- name: Deploy awall configuration
+  ansible.builtin.template:
+    src: templates/awall.j2
+    dest: /etc/awall/optional/fulcrum.json
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable fulcrum policy
+  community.general.awall:
+    name: fulcrum
+    state: enabled
+    activate: true

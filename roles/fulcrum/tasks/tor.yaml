@@ -1,0 +1,25 @@
+---
+- name: Add Hidden Service Electrum server configuration
+  ansible.builtin.blockinfile:
+    path: /etc/tor/torrc
+    insertafter: '## This section is just for location-hidden services ##'
+    block: |
+      # Hidden Service Electrum
+      HiddenServiceDir /var/lib/tor/electrum/
+      HiddenServiceVersion 3
+      HiddenServicePoWDefensesEnabled 1
+      HiddenServicePort 50002 127.0.0.1:50002
+
+- name: Reload Tor service to apply configuration
+  ansible.builtin.service:
+    name: tor
+    state: reloaded
+
+- name: Get the Electrum Onion address
+  ansible.builtin.command:
+    cmd: cat /var/lib/tor/electrum/hostname
+  register: electrum_onion_address
+
+- name: Display Electrum Onion address
+  ansible.builtin.debug:
+    msg: "Electrum Onion address: {{ electrum_onion_address.stdout }}"

@@ -1,0 +1,60 @@
+#!/sbin/openrc-run
+ 
+: ${FULCRUM_CONFIGFILE:=/etc/fulcrum/fulcrum.conf}
+: ${FULCRUM_DATADIR:=/var/lib/fulcrum}
+: ${FULCRUM_LOGDIR:=/var/log/fulcrum}
+: ${FULCRUM_USER:=fulcrum}
+: ${FULCRUM_GROUP:=fulcrum}
+: ${FULCRUM_BIN:=/usr/bin/Fulcrum}
+: ${FULCRUM_ADMINPORT:=8000}
+: ${FULCRUM_OPTS=${FULCRUM_OPTS}}
+: ${FULCRUM_SIGTERM_TIMEOUT:=600}
+ 
+FULCRUM_PIDDIR="/run/fulcrum"
+ 
+required_files="${FULCRUM_CONFIGFILE}"
+pidfile="${FULCRUM_PIDDIR}/${SVCNAME}.pid"
+retry="${FULCRUM_SIGTERM_TIMEOUT}"
+ 
+name="Fulcrum"
+description="A fast & nimble SPV Server for BCH, BTC, and LTC"
+ 
+command="${FULCRUM_BIN}"
+command_args="${FULCRUM_CONFIGFILE}
+              --datadir ${FULCRUM_DATADIR}
+              --admin ${FULCRUM_ADMINPORT}
+              --pidfile ${pidfile}
+              ${FULCRUM_OPTS}"
+command_user="${FULCRUM_USER}:${FULCRUM_GROUP}"
+command_background="true"
+ 
+start_stop_daemon_args="--stdout ${FULCRUM_LOGDIR}/debug.log
+                        --stderr ${FULCRUM_LOGDIR}/debug.log"
+ 
+depend() {
+    use bitcoind
+    after bitcoind
+}
+ 
+start_pre() {
+    checkpath --file      --mode 0660 --owner "${command_user}" "${FULCRUM_CONFIGFILE}"
+    checkpath --directory --mode 0750 --owner "${command_user}" "${FULCRUM_DATADIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${FULCRUM_LOGDIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${FULCRUM_PIDDIR}"
+    checkconfig
+}
+ 
+start_post() {
+    checkpath --file --owner "${command_user}" "${pidfile}"
+}
+ 
+checkconfig() {
+    if ! grep -qs '^rpccookie = ' "${FULCRUM_CONFIGFILE}"
+    then
+        eerror ""
+        eerror "ERROR: You must set a rpccookie path to run Fulcrum."
+        eerror "The setting must appear in ${FULCRUM_CONFIGFILE}"
+        eerror ""
+        return 1
+    fi
+}

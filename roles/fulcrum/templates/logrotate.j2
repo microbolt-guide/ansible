@@ -1,0 +1,13 @@
+/var/log/fulcrum/*.log {
+    weekly
+    missingok
+    rotate 104
+    compress
+    delaycompress
+    notifempty
+    create 0640 fulcrum fulcrum
+    sharedscripts
+    postrotate
+        killall -HUP `cat /run/fulcrum/fulcrum.pid`
+    endscript
+}

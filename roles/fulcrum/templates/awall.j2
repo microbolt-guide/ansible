@@ -1,0 +1,12 @@
+{
+  "description": "Allow Electrum SSL from anywhere",
+
+  "filter": [
+    {
+      "in": "internet",
+      "out": "_fw",
+      "port": "{{ electrum_port_ssl }}/tcp",
+      "action": "accept"
+    }
+  ]
+}

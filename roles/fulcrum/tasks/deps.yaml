@@ -1,0 +1,27 @@
+---
+- name: Install make dependencies
+  ansible.builtin.apk:
+    name: "{{ item }}"
+    state: latest
+    update_cache: true
+  loop:
+    - autoconf
+    - g++
+    - git
+    - jemalloc-dev
+    - lz4-dev
+    - make
+    - pkgconf
+    - qt6-qtbase-dev
+    - rocksdb-dev
+    - zeromq-dev
+
+- name: Install runtime dependencies
+  ansible.builtin.apk:
+    name: "{{ item }}"
+    state: latest
+    update_cache: true
+  loop:
+    - libzmq
+    - qt6-qtbase
+    - rocksdb

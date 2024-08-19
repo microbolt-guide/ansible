@@ -1,0 +1,46 @@
+---
+- name: Create fulcrum system group
+  ansible.builtin.group:
+    system: true
+    name: fulcrum
+    state: present
+
+- name: Create fulcrum system user
+  ansible.builtin.user:
+    system: true
+    password: "!"
+    create_home: false
+    home: /dev/null
+    shell: /sbin/nologin
+    group: fulcrum
+    comment: "fulcrum"
+    name: fulcrum
+    state: present
+
+- name: Add user fulcrum to bitcoin group
+  ansible.builtin.user:
+    name: fulcrum
+    groups: bitcoin
+    append: true
+    state: present
+
+- name: Add user satoshi to fulcrum group
+  ansible.builtin.user:
+    name: satoshi
+    groups: fulcrum
+    append: true
+    state: present
+
+# Firewall
+- include_tasks: awall.yaml
+  when: firewall_role == 'awall'
+
+- include_tasks: ufw.yaml
+  when: firewall_role == 'ufw'
+
+# Reverse Proxy
+- include_tasks: caddy.yaml
+  when: reverse_proxy_role == 'caddy'
+
+- include_tasks: nginx.yaml
+  when: reverse_proxy_role == 'nginx'
