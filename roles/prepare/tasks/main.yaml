@@ -1,7 +1,7 @@
 ---
 - name: Install dependencies
   community.general.apk:
-    name: curl,fail2ban,gnupg
+    name: curl,fail2ban,gnupg,openssl
     state: latest
     update_cache: true
 
