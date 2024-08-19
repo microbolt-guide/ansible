@@ -5,6 +5,15 @@
     state: latest
     update_cache: true
 
+- name: Append new configuration to Caddyfile
+  ansible.builtin.blockinfile:
+    path: /etc/caddy/Caddyfile
+    block: |
+      {
+        local_certs
+      }
+      import /etc/caddy/*.caddy
+
 - name: Make caddy start on boot
   ansible.builtin.service:
     name: caddy
