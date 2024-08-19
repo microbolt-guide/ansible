@@ -27,3 +27,10 @@
     - libsodium
     - libstdc++
     - libzmq
+
+- name: Install man dependencies
+  ansible.builtin.apk:
+    name: man-pages,mandoc
+    state: latest
+    update_cache: true
+  when: bitcoin_man

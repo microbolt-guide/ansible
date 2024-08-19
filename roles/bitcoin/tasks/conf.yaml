@@ -1,0 +1,39 @@
+---
+- block:
+  - name: Generate access credentials
+    ansible.builtin.shell:
+      cmd: |
+        sed "s/^#*rpcauth=.*$/rpcauth={{ bitcoin_rpc_username }}:${salt=$(openssl rand -hex 16)}\$$(\
+                printf "%s" "{{ bitcoin_rpc_password }}" | \
+                openssl dgst -sha256 -hmac "$salt" | \
+                awk '{print $2}' \
+            )/" /etc/bitcoin/bitcoin.conf > _; \
+        unset salt; \
+        mv -f _ /etc/bitcoin/bitcoin.conf
+
+  - name: Bitcoin configuration
+    ansible.builtin.lineinfile:
+      path: /etc/bitcoin/bitcoin.conf
+      regexp: '^#?{{ item.split("=")[0] }}='
+      line: "{{ item }}"
+      state: present
+    loop: "{{ bitcoin_config_options }}"
+  
+  - name: Bitcoin logrotate script
+    ansible.builtin.template:
+      src: logrotate.j2
+      dest: /etc/logrotate.d/bitcoind
+      mode: '0644'
+  
+  - name: Bitcoin init script
+    ansible.builtin.template:
+      src: init.j2
+      dest: /etc/init.d/bitcoind
+      mode: '0755'
+  
+  - name: Start bitcoind
+    ansible.builtin.service:
+      name: bitcoind
+      enabled: true
+      state: stopped
+  when: install_result is not failed

@@ -1,0 +1,13 @@
+/var/log/bitcoind/*.log {
+    weekly
+    missingok
+    rotate 104
+    compress
+    delaycompress
+    notifempty
+    create 0640 bitcoin bitcoin
+    sharedscripts
+    postrotate
+        killall -HUP `cat /run/bitcoind.pid`
+    endscript
+}

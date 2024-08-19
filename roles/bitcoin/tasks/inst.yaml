@@ -1,0 +1,59 @@
+---
+- block:
+  - name: Configure bitcoin
+    ansible.builtin.shell:
+      cmd: |
+        ./autogen.sh
+        ./configure \
+            --prefix=/usr \
+            {{ '--mandir=/usr/share/man' if bitcoin_man else '--disable-man' }} \
+            --with-daemon \
+            --with-utils \
+            --without-bdb \
+            --without-gui \
+            --without-libs \
+            --without-qrencode \
+            --enable-hardening \
+            --enable-lto \
+            --enable-reduce-exports \
+            --enable-static \
+            --disable-bench \
+            --disable-ccache \
+            --disable-fuzz \
+            --disable-fuzz-binary \
+            --disable-gui-tests \
+            --disable-maintainer-mode \
+            --disable-shared \
+            --disable-tests \
+            --disable-wallet
+    args:
+      chdir: /tmp/bitcoin-{{ bitcoin_version }}
+    register: configure_result
+
+  - name: Compile bitcoin
+    ansible.builtin.shell:
+      cmd: make
+    args:
+      chdir: /tmp/bitcoin-{{ bitcoin_version }}
+    register: make_result
+    when: configure_result is not failed
+  environment: "{{ env_vars }}"
+  become_user: "{{ ansible_user }}"
+  when: verify_result is not failed
+
+- name: Install bitcoin
+  ansible.builtin.shell:
+    cmd: |
+      make install
+      strip /usr/bin/bitcoin*
+      install \
+          -D \
+          -m 0660 \
+          -o bitcoin \
+          -g bitcoin \
+          ./share/examples/bitcoin.conf \
+          /etc/bitcoin/bitcoin.conf
+  args:
+    chdir: /tmp/bitcoin-{{ bitcoin_version }}
+  register: install_result
+  when: make_result is not failed
