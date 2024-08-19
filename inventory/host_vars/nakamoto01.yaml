@@ -1,3 +1,4 @@
+---
 ethernet: eth0
 
 firewall_role: awall # awall or ufw
@@ -7,3 +8,8 @@ bitcoin_role: knots # knots or core
 electrum_role: fulcrum # fulcrum or electrs
 explorer_role: btcrpc # btcrpc or mempool
 lightning_role: lnd # lnd or c-lightning
+
+bitcoin_man: false
+bitcoin_rpc_username: microbolt
+bitcoin_rpc_password: passwd
+bitcoin_dbcache: 32768

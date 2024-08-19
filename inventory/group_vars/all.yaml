@@ -1,24 +1,60 @@
+---
 ansible_user: satoshi
 ansible_become: true
 ansible_become_method: doas
 
+ethernet: eth0
+
 env_vars:
   CC: "clang"
-  CXX: "{{ env_vars.CC }}++"
+  CXX: "clang++"
   CFLAGS: "-O3 -pipe -march=native -fPIE"
-  CXXFLAGS: "{{ env_vars.CFLAGS }}"
+  CXXFLAGS: "-O3 -pipe -march=native -fPIE"
   LDFLAGS: "-pie -Wl,--as-needed"
   MAKEFLAGS: "-j$(nproc)"
 
+firewall_role: awall # awall or ufw
+reverse_proxy_role: caddy # caddy or nginx
+ssh_tor: false
+bitcoin_role: knots # knots or core
+electrum_role: fulcrum # fulcrum or electrs
+explorer_role: btcrpc # btcrpc or mempool
+lightning_role: lnd # lnd or c-lightning
+
+bitcoin_man: false
+bitcoin_rpc_username: microbolt
+bitcoin_rpc_password: passwd
+bitcoin_dbcache: 32768
+
 bitcoin_base_url: >-
-  {%- if bitcoin_role == 'core' -%}
-    https://bitcoin{{ bitcoin_role }}.org/bin/bitcoin-{{ bitcoin_role }}-{{ bitcoin_version }}
-  {%- elif bitcoin_role == 'knots' -%}
+  {%- if bitcoin_role == 'knots' -%}
     https://bitcoin{{ bitcoin_role }}.org/files/{{ bitcoin_version | regex_replace('\..*$', '') }}.x/{{ bitcoin_version }}
+  {%- elif bitcoin_role == 'core' -%}
+    https://bitcoin{{ bitcoin_role }}.org/bin/bitcoin-{{ bitcoin_role }}-{{ bitcoin_version }}
   {%- endif -%}
-bitcoin_keys_url: |
-  {%- if bitcoin_role == 'core' -%}
-    https://api.github.com/repositories/355107265/contents/builder-keys
-  {%- elif bitcoin_role == 'knots' -%}
+bitcoin_keys_url: >-
+  {%- if bitcoin_role == 'knots' -%}
     https://api.github.com/repos/bitcoinknots/guix.sigs/contents/builder-keys
+  {%- elif bitcoin_role == 'core' -%}
+    https://api.github.com/repositories/355107265/contents/builder-keys
   {%- endif -%}
+
+bitcoin_config_options:
+  - assumevalid=0
+  - blockfilterindex=1
+  - blocksonly=1
+  - coinstatsindex=1
+  - dbcache={{ bitcoin_dbcache }}
+  - txindex=1
+  - i2psam=127.0.0.1:7656
+  - onion=127.0.0.1:9050
+  - peerblockfilters=1
+  - peerbloomfilters=1
+  - zmqpubhashblock=tcp://127.0.0.1:8433
+  - zmqpubrawblock=tcp://127.0.0.1:28332
+  - zmqpubrawtx=tcp://127.0.0.1:28333
+  - debug=i2p
+  - debug=tor
+  - server=1
+
+fulcrum_keys_url: https://raw.githubusercontent.com/Electron-Cash/keys-n-hashes/master/pubkeys/calinkey.txt
