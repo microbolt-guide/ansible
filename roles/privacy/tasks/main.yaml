@@ -17,9 +17,9 @@
     name: tor
     state: present
 
-- name: Install tor
+- name: Install i2p and tor
   community.general.apk:
-    name: tor
+    name: i2pd,tor
     state: latest
     update_cache: true
 
@@ -55,47 +55,12 @@
       CookieAuthFileGroupReadable 1
       DataDirectoryGroupReadable 1
 
-- name: Make tor start on boot
+- name: Make i2p tor start on boot
   ansible.builtin.service:
-    name: tor
+    name: "{{ item }}"
     enabled: true
     state: started
+  loop: "{{ ['i2pd', 'tor'] }}"
 
-- block:
-    - name: Add Hidden Service SSH server configuration
-      ansible.builtin.blockinfile:
-        path: /etc/tor/torrc
-        insertafter: '## This section is just for location-hidden services ##'
-        block: |
-          # Hidden Service SSH server
-          HiddenServiceDir /var/lib/tor/ssh/
-          HiddenServiceVersion 3
-          HiddenServicePoWDefensesEnabled 1
-          HiddenServicePort 22 127.0.0.1:22
-
-    - name: Reload Tor service to apply configuration
-      ansible.builtin.service:
-        name: tor
-        state: reloaded
-
-    - name: Get the SSH Onion address
-      ansible.builtin.command:
-        cmd: cat /var/lib/tor/ssh/hostname
-      register: ssh_onion_address
-
-    - name: Display SSH Onion address
-      ansible.builtin.debug:
-        msg: "SSH Onion address: {{ ssh_onion_address.stdout }}"
+- include_tasks: ssh_tor.yaml
   when: ssh_tor
-
-- name: Install i2p
-  community.general.apk:
-    name: i2pd
-    state: latest
-    update_cache: true
-
-- name: Make i2p start on boot
-  ansible.builtin.service:
-    name: i2pd
-    enabled: true
-    state: started
