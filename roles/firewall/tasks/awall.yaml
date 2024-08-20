@@ -7,41 +7,31 @@
 
 - name: Add the ip_tables module and make sure it is loaded after reboots
   community.general.modprobe:
-    name: ip_tables
+    name: "{{ item }}"
     state: present
     persistent: present
+  loop:
+    - ip_tables
+    - ip6_tables
 
 - name: Make iptables start on boot
   ansible.builtin.service:
-    name: iptables
+    name: "{{ item }}"
     enabled: true
+  loop:
+    - iptables
+    - ip6tables
 
-- name: Add the ip6_tables module and make sure it is loaded after reboots
-  community.general.modprobe:
-    name: ip6_tables
-    state: present
-    persistent: present
-
-- name: Make ip6tables start on boot
-  ansible.builtin.service:
-    name: ip6tables
-    enabled: true
-
-- name: Deploy awall base configuration
+- name: Deploy awall base-config and ssh
   ansible.builtin.template:
-    src: templates/base-config.j2
-    dest: /etc/awall/optional/base-config.json
+    src: "templates/{{ item }}.j2"
+    dest: "/etc/awall/optional/{{ item }}.json"
     owner: root
     group: root
     mode: '0644'
-
-- name: Deploy awall ssh configuration
-  ansible.builtin.template:
-    src: templates/ssh.j2
-    dest: /etc/awall/optional/ssh.json
-    owner: root
-    group: root
-    mode: '0644'
+  loop:
+    - base-config
+    - ssh
 
 - name: Enable base-config and ssh policy
   community.general.awall:
