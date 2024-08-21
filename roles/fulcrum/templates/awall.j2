@@ -1,12 +1,13 @@
 {
-  "description": "Allow Electrum SSL from anywhere",
+  "description": "Allow Electrum SSL",
 
   "filter": [
     {
       "in": "internet",
       "out": "_fw",
-      "port": "{{ electrum_port_ssl }}/tcp",
-      "action": "accept"
+      "service": { "proto": "tcp", "port": {{ electrum_port_ssl }} },
+      "action": "accept",
+      "conn-limit": { "count": 10, "interval": 60 }
     }
   ]
 }
