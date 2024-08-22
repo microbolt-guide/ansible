@@ -1,12 +1,6 @@
 ---
 - name: Install dependencies
   community.general.apk:
-    name: curl,fail2ban,gnupg,openssl
+    name: curl,gnupg,openssl
     state: latest
     update_cache: true
-
-- name: Make fail2ban start on boot
-  ansible.builtin.service:
-    name: fail2ban
-    enabled: true
-    state: started
