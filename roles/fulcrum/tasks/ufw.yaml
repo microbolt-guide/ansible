@@ -1,7 +1,7 @@
 ---
 - name: Allow Electrum
   community.general.ufw:
-    rule: allow
+    rule: limit
     port: "{{ fulcrum_port_ssl }}"
     proto: tcp
-    comment: "Allow Electrum SSL from anywhere"
+    comment: "Allow Electrum SSL"
