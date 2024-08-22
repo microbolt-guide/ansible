@@ -4,3 +4,6 @@
     name: curl,gnupg,openssl
     state: latest
     update_cache: true
+
+- include_tasks: disks.yaml
+  when: second_disk

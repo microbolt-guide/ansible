@@ -6,6 +6,10 @@ ansible_become_method: doas
 
 # System options
 ethernet: eth0
+second_disk: true
+second_disk_dev: /dev/sdb
+second_disk_part: true
+second_disk_format: ext4
 
 # Compile options
 env_vars:
@@ -38,6 +42,9 @@ bitcoin_dbcache: 32768
 electrum_port_tcp: 50001
 electrum_port_ssl: 50002
 
+################################################################################
+# Do not edit below this line unless you know what you are doing               #
+################################################################################
 bitcoin_base_url: >-
   {%- if bitcoin_role == 'knots' -%}
     https://bitcoin{{ bitcoin_role }}.org/files/{{ bitcoin_version | regex_replace('\..*$', '') }}.x/{{ bitcoin_version }}
@@ -77,3 +84,9 @@ fulcrum_config_options:
   - "tcp = 0.0.0.0:{{ electrum_port_tcp }}"
   - "banner = /etc/fulcrum/banner.txt"
   - "peering = false"
+
+electrs_keys_url: https://romanzey.de/pgp.txt
+electrs_config_options:
+  - "cookie_file = \"/var/lib/bitcoind/.cookie\""
+  - "#db_dir = \"/some/fast/storage/with/big/size\""
+  - "daemon_dir = \"/var/lib/bitcoind\""

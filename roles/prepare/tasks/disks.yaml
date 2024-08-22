@@ -1,0 +1,53 @@
+---
+- name: Install extra dependencies
+  community.general.apk:
+    name: rsync
+    state: latest
+    update_cache: true
+
+- block:
+  - name: Partition secondary disk
+    ansible.builtin.shell: |
+      fdisk {{ second_disk_dev }} <<EOF
+      o
+      n
+      p
+      1
+      
+      
+      t
+      83
+      w
+      EOF
+
+  - name: Format secondary disk
+    community.general.filesystem:
+      dev: "{{ second_disk_dev }}1"
+      fstype: "{{ second_disk_format }}"
+  when: second_disk_part
+
+- name: Mount secondary disk
+  ansible.posix.mount:
+    fstype: "{{ second_disk_format }}"
+    path: /mnt/newvar
+    src: "{{ second_disk_dev }}1"
+    state: ephemeral
+
+- name: Copy /var to secondary disk
+  ansible.posix.synchronize:
+    delete: false
+    dest: /mnt/newvar/
+    recursive: true
+    src: /var/
+  delegate_to: "{{ inventory_hostname }}"
+
+- name: Mount secondary disk to /var
+  ansible.posix.mount:
+    fstype: "{{ second_disk_format }}"
+    path: /var
+    src: "{{ second_disk_dev }}1"
+    state: present
+
+- name: Reboot
+  ansible.builtin.reboot:
+    reboot_timeout: 300
