@@ -1,0 +1,60 @@
+#!/sbin/openrc-run
+
+: ${ELECTRS_CONFIGFILE:=/etc/electrs/config.toml}
+: ${ELECTRS_DATADIR:=/var/lib/electrs}
+: ${ELECTRS_LOGDIR:=/var/log/electrs}
+: ${ELECTRS_USER:=electrs}
+: ${ELECTRS_GROUP:=electrs}
+: ${ELECTRS_BIN:=/usr/bin/electrs}
+: ${ELECTRS_OPTS=${ELECTRS_OPTS}}
+: ${ELECTRS_SIGTERM_TIMEOUT:=600}
+
+ELECTRS_PIDDIR="/run/electrs"
+
+required_files="${ELECTRS_CONFIGFILE}"
+pidfile="${ELECTRS_PIDDIR}/${SVCNAME}.pid"
+retry="${ELECTRS_SIGTERM_TIMEOUT}"
+
+name="Electrs"
+description="Efficient re-implementation of Electrum Server in Rust"
+
+command="${ELECTRS_BIN}"
+command_args="--conf ${ELECTRS_CONFIGFILE}
+              --skip-default-conf-files
+              --db-dir ${ELECTRS_DATADIR}
+              --timestamp
+              --skip-block-download-wait
+              ${ELECTRS_OPTS}"
+command_user="${ELECTRS_USER}:${ELECTRS_GROUP}"
+command_background="true"
+
+start_stop_daemon_args="--stdout ${ELECTRS_LOGDIR}/debug.log
+                        --stderr ${ELECTRS_LOGDIR}/debug.log"
+
+depend() {
+    use bitcoind
+    after bitcoind
+}
+
+start_pre() {
+    checkpath --file      --mode 0660 --owner "${command_user}" "${ELECTRS_CONFIGFILE}"
+    checkpath --directory --mode 0750 --owner "${command_user}" "${ELECTRS_DATADIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${ELECTRS_LOGDIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${ELECTRS_PIDDIR}"
+    checkconfig
+}
+
+start_post() {
+    checkpath --file --owner "${command_user}" "${pidfile}"
+}
+
+checkconfig() {
+    if ! grep -qs '^cookie_file = ' "${ELECTRS_CONFIGFILE}"
+    then
+        eerror ""
+        eerror "ERROR: You must set a cookie_file path to run Electrs."
+        eerror "The setting must appear in ${ELECTRS_CONFIGFILE}"
+        eerror ""
+        return 1
+    fi
+}

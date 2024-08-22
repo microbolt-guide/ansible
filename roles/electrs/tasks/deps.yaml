@@ -1,0 +1,19 @@
+---
+- name: Install make dependencies
+  ansible.builtin.apk:
+    name: "{{ item }}"
+    state: latest
+    update_cache: true
+  loop:
+    - cargo
+    - cargo-auditable
+    - clang-dev
+    - cmake
+    - git
+    - rocksdb-dev
+
+- name: Install runtime dependencies
+  ansible.builtin.apk:
+    name: rocksdb
+    state: latest
+    update_cache: true

@@ -1,0 +1,19 @@
+---
+- name: Deploy nginx configuration
+  ansible.builtin.template:
+    src: templates/nginx.j2
+    dest: /etc/nginx/streams-available/electrum-reverse-proxy.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create symbolic link for nginx configuration
+  ansible.builtin.file:
+    src: /etc/nginx/streams-available/electrum-reverse-proxy.conf
+    dest: /etc/nginx/streams-enabled/electrum-reverse-proxy.conf
+    state: link
+
+- name: Restart nginx service
+  ansible.builtin.service:
+    name: nginx
+    state: restarted

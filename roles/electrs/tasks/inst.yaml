@@ -1,0 +1,91 @@
+---
+- name: Get version number of latest electrs release
+  ansible.builtin.shell:
+    cmd: curl --silent 'https://api.github.com/repos/romanz/electrs/releases/latest' |  grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
+  register: electrs_version_result
+
+- block:
+  - name: Set electrs_version fact
+    set_fact:
+      electrs_version: "{{ electrs_version_result.stdout }}"
+
+  - name: Download electrs repository
+    ansible.builtin.shell:
+      cmd: git clone --branch v{{ electrs_version }} https://github.com/romanz/electrs.git
+    args:
+      chdir: /tmp
+    register: import_keys_result
+
+  - name: Import PGP keys from GitHub repository
+    ansible.builtin.shell:
+      cmd: wget -qO- "{{ electrs_keys_url }}" | gpg --import
+    register: import_keys_result
+
+  - name: Debug import_keys_result
+    ansible.builtin.debug:
+      var: import_keys_result.stderr_lines
+
+  - name: Verify electrs tag
+    ansible.builtin.shell:
+      cmd: git verify-tag v{{ electrs_version }}
+    args:
+      chdir: /tmp/electrs
+    register: verify_result
+    failed_when: "'Good signature' not in verify_result.stderr"
+
+  - name: Debug verify_result
+    ansible.builtin.debug:
+      var: verify_result.stderr_lines
+  become_user: "{{ ansible_user }}"
+  when: electrs_version_result is not failed
+
+- name: Compile electrs
+  ansible.builtin.shell:
+    cmd: |
+      ROCKSDB_INCLUDE_DIR=/usr/include \
+      ROCKSDB_LIB_DIR=/usr/lib \
+      CARGO_HOME="$PWD/.cargo" \
+      cargo auditable build \
+          --bin electrs \
+          --features "metrics_process" \
+          --release \
+          --locked \
+          --jobs "$(nproc)"
+  args:
+    chdir: /tmp/electrs
+  register: compile_result
+  environment: "{{ env_vars }}"
+  become_user: "{{ ansible_user }}"
+  when: verify_result is not failed
+
+- block:
+  - name: Install electrs binary
+    ansible.builtin.copy:
+      src: /tmp/electrs/target/release/electrs
+      dest: /usr/bin/electrs
+      owner: root
+      group: root
+      mode: '0755'
+      remote_src: yes
+
+  - name: Ensure /etc/electrs directory exists
+    ansible.builtin.file:
+      path: /etc/electrs
+      state: directory
+      owner: electrs
+      group: electrs
+      mode: '0755'
+
+  - name: Install electrs config
+    ansible.builtin.copy:
+      src: /tmp/electrs/doc/config_example.toml
+      dest: /etc/electrs/config.toml
+      owner: electrs
+      group: electrs
+      mode: '0660'
+      remote_src: yes
+
+  - name: Strip binaries
+    ansible.builtin.shell:
+      cmd: strip /usr/bin/electrs
+  when: compile_result is not failed

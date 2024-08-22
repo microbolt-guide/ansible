@@ -1,0 +1,46 @@
+---
+- name: Create electrs system group
+  ansible.builtin.group:
+    system: true
+    name: electrs
+    state: present
+
+- name: Create electrs system user
+  ansible.builtin.user:
+    system: true
+    password: "!"
+    create_home: false
+    home: /dev/null
+    shell: /sbin/nologin
+    group: electrs
+    comment: "electrs"
+    name: electrs
+    state: present
+
+- name: Add user electrs to bitcoin group
+  ansible.builtin.user:
+    name: electrs
+    groups: bitcoin
+    append: true
+    state: present
+
+- name: Add user satoshi to electrs group
+  ansible.builtin.user:
+    name: satoshi
+    groups: electrs
+    append: true
+    state: present
+
+# Firewall
+- include_tasks: awall.yaml
+  when: firewall_role == 'awall'
+
+- include_tasks: ufw.yaml
+  when: firewall_role == 'ufw'
+
+# Reverse Proxy
+- include_tasks: caddy.yaml
+  when: reverse_proxy_role == 'caddy'
+
+- include_tasks: nginx.yaml
+  when: reverse_proxy_role == 'nginx'

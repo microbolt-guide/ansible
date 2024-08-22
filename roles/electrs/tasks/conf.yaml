@@ -1,0 +1,31 @@
+---
+- block:
+  - name: Electrs configuration
+    ansible.builtin.lineinfile:
+      path: /etc/electrs/config.toml
+      regexp: '^#?\s*{{ item.lstrip("#").split("=")[0] | regex_escape }}\s*='
+      line: "{{ item }}"
+      state: present
+    loop: "{{ electrs_config_options }}"
+
+  - include_tasks: tor.yaml
+    when: electrum_tor
+
+  - name: Electrs logrotate script
+    ansible.builtin.template:
+      src: logrotate.j2
+      dest: /etc/logrotate.d/electrs
+      mode: '0644'
+  
+  - name: Electrs init script
+    ansible.builtin.template:
+      src: init.j2
+      dest: /etc/init.d/electrs
+      mode: '0755'
+  
+  - name: Start electrs
+    ansible.builtin.service:
+      name: electrs
+      enabled: true
+      state: stopped
+  when: make_result is not failed
