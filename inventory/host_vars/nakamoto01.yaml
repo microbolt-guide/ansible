@@ -1,17 +1,29 @@
 ---
+# System options
 ethernet: eth0
+second_disk: true
+second_disk_dev: /dev/sdb
+second_disk_part: true
+second_disk_format: ext4
 
-firewall_role: ufw # awall or ufw
-reverse_proxy_role: nginx # caddy or nginx
+# Microbolt options
+firewall_role: awall # awall or ufw
+reverse_proxy_role: caddy # caddy or nginx
 bitcoin_role: knots # knots or core
 electrum_role: fulcrum # fulcrum or electrs
 explorer_role: btcrpc # btcrpc or mempool
 lightning_role: lnd # lnd or c-lightning
 
+# Tor options
 ssh_tor: false
-electrum_tor: true
+electrum_tor: false
 
+# Bitcoin options
 bitcoin_man: false
 bitcoin_rpc_username: microbolt
 bitcoin_rpc_password: passwd
-bitcoin_dbcache: 32768
+bitcoin_dbcache: 46080
+
+# Electrum options
+electrum_port_tcp: 50001
+electrum_port_ssl: 50002
