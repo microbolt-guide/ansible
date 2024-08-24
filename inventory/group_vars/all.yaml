@@ -36,7 +36,7 @@ electrum_tor: false
 bitcoin_man: false
 bitcoin_rpc_username: microbolt
 bitcoin_rpc_password: passwd
-bitcoin_dbcache: 32768
+bitcoin_dbcache: 46080
 
 # Electrum options
 electrum_port_tcp: 50001
@@ -71,6 +71,8 @@ bitcoin_config_options:
   - zmqpubhashblock=tcp://127.0.0.1:8433
   - zmqpubrawblock=tcp://127.0.0.1:28332
   - zmqpubrawtx=tcp://127.0.0.1:28333
+  - datacarrier=0
+  - permitbaremultisig=0
   - debug=i2p
   - debug=tor
   - server=1
