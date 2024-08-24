@@ -35,5 +35,5 @@
     ansible.builtin.service:
       name: bitcoind
       enabled: true
-      state: stopped
+      state: started
   when: install_result is not failed

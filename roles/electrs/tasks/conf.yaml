@@ -27,5 +27,5 @@
     ansible.builtin.service:
       name: electrs
       enabled: true
-      state: stopped
+      state: started
   when: make_result is not failed

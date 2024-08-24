@@ -35,5 +35,5 @@
     ansible.builtin.service:
       name: fulcrum
       enabled: true
-      state: stopped
+      state: started
   when: make_result is not failed
