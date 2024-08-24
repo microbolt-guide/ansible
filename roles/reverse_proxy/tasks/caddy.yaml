@@ -10,7 +10,7 @@
     path: /etc/caddy/Caddyfile
     block: |
       {
-        local_certs
+      	local_certs
       }
       import /etc/caddy/*.caddy
 
