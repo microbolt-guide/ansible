@@ -1,7 +1,7 @@
 ---
 - name: Install dependencies
   community.general.apk:
-    name: curl,gnupg,openssl,qemu-guest-agent
+    name: gnupg,openssl,qemu-guest-agent
     state: latest
     update_cache: true
 
