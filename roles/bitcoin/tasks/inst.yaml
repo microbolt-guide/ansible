@@ -57,3 +57,20 @@
     chdir: /tmp/bitcoin-{{ bitcoin_version }}
   register: install_result
   when: make_result is not failed
+
+- block:
+  - name: Cleanup bitcoin
+    ansible.builtin.file:
+      path: "{{ item }}"
+      state: absent
+    ignore_errors: true
+    loop:
+      - "/tmp/bitcoin-{{ bitcoin_version }}*"
+      - "/tmp/SHA256SUMS*"
+
+  - name: Remove build dependencies
+    community.general.apk:
+      name: "{{ item }}"
+      state: absent
+    loop: "{{ bitcoin_build_deps }}"
+  when: install_result is not failed

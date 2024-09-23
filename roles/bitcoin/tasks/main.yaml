@@ -1,9 +1,9 @@
 ---
+# Preparation, firewall and reverse proxy
 - include_tasks: prep.yaml
-
+# Dependencies
 - include_tasks: deps.yaml
-  when: verify_result is not failed
-
+# Installation
 - include_tasks: inst.yaml
-
+# Configuration and start service
 - include_tasks: conf.yaml

@@ -1,36 +1,23 @@
 ---
-- name: Install make dependencies
-  ansible.builtin.apk:
-    name: "{{ item }}"
-    state: latest
-    update_cache: true
-  loop:
-    - autoconf
-    - automake
-    - boost-dev
-    - clang
-    - chrpath
-    - file
-    - libevent-dev
-    - libtool
-    - make
-    - pkgconf
-    - zeromq-dev
+- block:
+  - name: Install build dependencies
+    ansible.builtin.apk:
+      name: "{{ item }}"
+      state: latest
+      update_cache: true
+    loop: "{{ bitcoin_build_deps }}"
 
-- name: Install runtime dependencies
-  ansible.builtin.apk:
-    name: "{{ item }}"
-    state: latest
-    update_cache: true
-  loop:
-    - libevent
-    - libsodium
-    - libstdc++
-    - libzmq
+  - name: Install runtime dependencies
+    ansible.builtin.apk:
+      name: "{{ item }}"
+      state: latest
+      update_cache: true
+    loop: "{{ bitcoin_make_deps }}"
 
-- name: Install man dependencies
-  ansible.builtin.apk:
-    name: man-pages,mandoc
-    state: latest
-    update_cache: true
-  when: bitcoin_man
+  - name: Install man dependencies
+    ansible.builtin.apk:
+      name: man-pages,mandoc
+      state: latest
+      update_cache: true
+    when: bitcoin_man
+  when: verify_result is not failed

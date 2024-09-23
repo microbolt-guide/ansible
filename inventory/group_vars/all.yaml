@@ -68,6 +68,23 @@ bitcoin_keys_url: >-
   {%- elif bitcoin_role == 'core' -%}
     https://api.github.com/repositories/355107265/contents/builder-keys
   {%- endif -%}
+bitcoin_build_deps:
+  - autoconf
+  - automake
+  - boost-dev
+  - clang
+  - chrpath
+  - file
+  - libevent-dev
+  - libtool
+  - make
+  - pkgconf
+  - zeromq-dev
+bitcoin_make_deps:
+  - libevent
+  - libsodium
+  - libstdc++
+  - libzmq
 bitcoin_config_options:
   - assumevalid=0
   - blockfilterindex=1

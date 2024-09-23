@@ -1,54 +1,54 @@
 ---
-- name: Create bitcoin system group
-  ansible.builtin.group:
-    system: true
-    name: bitcoin
-    state: present
-
-- name: Create bitcoin system user
-  ansible.builtin.user:
-    system: true
-    password: "!"
-    create_home: false
-    home: /dev/null
-    shell: /sbin/nologin
-    group: bitcoin
-    comment: "bitcoin"
-    name: bitcoin
-    state: present
-
-- name: Add user satoshi to bitcoin group
-  ansible.builtin.user:
-    name: satoshi
-    groups: bitcoin
-    append: true
-    state: present
-
-- name: Add user bitcoin to tor group
-  ansible.builtin.user:
-    name: bitcoin
-    groups: tor
-    append: true
-    state: present
-
-- name: Create a symbolic link bitcoin to satoshi home
-  ansible.builtin.file:
-    src: /var/lib/bitcoind
-    dest: "$HOME/.bitcoin"
-    state: link
-    force: true
-    follow: false
-  become_user: "{{ ansible_user }}"
-
 - name: Get version number of latest bitcoin {{ bitcoin_role }} release
   ansible.builtin.shell:
-    cmd: curl --silent 'https://api.github.com/repos/{{ 'bitcoin' if bitcoin_role == 'core' else 'bitcoinknots' if bitcoin_role == 'knots' }}/bitcoin/releases/latest' |  grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
+    cmd: wget -qO- 'https://api.github.com/repos/{{ 'bitcoin' if bitcoin_role == 'core' else 'bitcoinknots' if bitcoin_role == 'knots' }}/bitcoin/releases/latest' |  grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
   register: bitcoin_version_result
 
 - block:
   - name: Set bitcoin_version fact
     set_fact:
       bitcoin_version: "{{ bitcoin_version_result.stdout }}"
+
+  - name: Create bitcoin system group
+    ansible.builtin.group:
+      system: true
+      name: bitcoin
+      state: present
+
+  - name: Create bitcoin system user
+    ansible.builtin.user:
+      system: true
+      password: "!"
+      create_home: false
+      home: /dev/null
+      shell: /sbin/nologin
+      group: bitcoin
+      comment: "bitcoin"
+      name: bitcoin
+      state: present
+
+  - name: Add user {{ ansible_user }} to bitcoin group
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups: bitcoin
+      append: true
+      state: present
+
+  - name: Add user bitcoin to tor group
+    ansible.builtin.user:
+      name: bitcoin
+      groups: tor
+      append: true
+      state: present
+
+  - name: Create a symbolic link bitcoin to {{ ansible_user }} home
+    ansible.builtin.file:
+      src: /var/lib/bitcoind
+      dest: "$HOME/.bitcoin"
+      state: link
+      force: true
+      follow: false
+    become_user: "{{ ansible_user }}"
 
   - name: Download bitcoin tarball
     ansible.builtin.get_url:
