@@ -1,21 +1,79 @@
 ---
-- name: Install caddy
-  community.general.apk:
-    name: caddy
-    state: latest
-    update_cache: true
+- name: Get version number of latest caddy release
+  ansible.builtin.shell:
+    cmd: wget -qO- https://api.github.com/repos/caddyserver/caddy/releases/latest | grep "tag_name" | cut -d '"' -f 4 | sed 's/^v//'
+  register: caddy_version_result
 
-- name: Append new configuration to Caddyfile
-  ansible.builtin.blockinfile:
-    path: /etc/caddy/Caddyfile
-    block: |
-      {
-      	local_certs
-      }
-      import /etc/caddy/*.caddy
+- block:
+  - name: Set caddy_version fact
+    set_fact:
+      caddy_version: "{{ caddy_version_result.stdout }}"
 
-- name: Make caddy start on boot
-  ansible.builtin.service:
-    name: caddy
-    enabled: true
-    state: started
+  - name: Create caddy system group
+    ansible.builtin.group:
+      system: true
+      name: caddy
+      state: present
+
+  - name: Create caddy system user
+    ansible.builtin.user:
+      system: true
+      password: "!"
+      create_home: false
+      home: /dev/null
+      shell: /sbin/nologin
+      group: caddy
+      comment: "caddy"
+      name: caddy
+      state: present
+
+  - name: Add user {{ ansible_user }} to caddy group
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups: caddy
+      append: true
+      state: present
+
+  - name: Download caddy tarball
+    ansible.builtin.get_url:
+      url: "{{ caddy_base_url }}/caddy_{{ caddy_version }}_linux_amd64.tar.gz"
+      dest: "/tmp"
+      checksum: "sha512:{{ caddy_base_url }}/caddy_{{ caddy_version }}_checksums.txt"
+    become_user: "{{ ansible_user }}"
+
+  - name: Extract caddy tarball
+    ansible.builtin.shell:
+      cmd: tar xzf caddy_{{ caddy_version }}_linux_amd64.tar.gz caddy -C /usr/bin/
+    args:
+      chdir: /tmp
+  
+  - name: Add caddy necessary modules
+    ansible.builtin.shell:
+      cmd: caddy add-package github.com/mholt/caddy-l4
+  
+  - name: Create directory for caddy configuration
+    ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+    loop:
+      - /etc/caddy/sites
+      - /etc/caddy/streams
+
+  - name: Caddyfile
+    ansible.builtin.template:
+      src: caddyfile.j2
+      dest: /etc/caddy/Caddyfile
+      mode: '0644'
+
+  - name: caddy init script
+    ansible.builtin.template:
+      src: caddy-init.j2
+      dest: /etc/init.d/caddy
+      mode: '0755'
+  
+  - name: Start caddy
+    ansible.builtin.service:
+      name: caddy
+      enabled: true
+      state: started
+  when: caddy_version_result is not failed

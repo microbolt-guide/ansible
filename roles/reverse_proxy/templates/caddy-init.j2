@@ -1,0 +1,70 @@
+#!/sbin/openrc-run
+ 
+: ${CADDY_CONFIGFILE:=/etc/caddy/Caddyfile}
+: ${CADDY_DATADIR:=/var/lib/caddy}
+: ${CADDY_LOGDIR:=/var/log/caddy}
+: ${CADDY_USER:=caddy}
+: ${CADDY_GROUP:=caddy}
+: ${CADDY_BIN:=/usr/bin/caddy}
+: ${CADDY_OPTS=${CADDY_OPTS}}
+: ${CADDY_SIGTERM_TIMEOUT:=600}
+ 
+CADDY_PIDDIR="/run/caddy"
+ 
+name="Caddy web server"
+description="Fast, multi-platform web server with automatic HTTPS"
+ 
+required_files="${CADDY_CONFIGFILE}"
+pidfile="${CADDY_PIDDIR}/${SVCNAME}.pid"
+retry="${CADDY_SIGTERM_TIMEOUT}"
+capabilities="^cap_net_bind_service"
+ 
+command="${CADDY_BIN}"
+command_args="run
+              --config ${CADDY_CONFIGFILE}
+              ${CADDY_OPTS}"
+command_user="${CADDY_USER}:${CADDY_GROUP}"
+command_background="true"
+ 
+start_stop_daemon_args="--env XDG_CONFIG_HOME=${CADDY_DATADIR%/caddy}
+                        --env XDG_DATA_HOME=${CADDY_DATADIR%/caddy}
+                        --stdout ${CADDY_LOGDIR}/debug.log
+                        --stderr ${CADDY_LOGDIR}/debug.log"
+ 
+extra_commands="checkconfig"
+description_checkconfig="Check configuration"
+ 
+extra_started_commands="reload"
+description_reload="Reload configuration without downtime"
+ 
+depend() {
+  need net localmount
+  after firewall
+}
+ 
+start_pre() {
+    checkpath --file      --mode 0660 --owner "${command_user}" "${CADDY_CONFIGFILE}"
+    checkpath --directory --mode 0750 --owner "${command_user}" "${CADDY_DATADIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${CADDY_LOGDIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${CADDY_PIDDIR}"
+    checkconfig
+}
+ 
+checkconfig() {
+  if [ ! -f "${CADDY_CONFIGFILE}" ] ; then
+    ewarn "${CADDY_CONFIGFILE} does not exist." && return 1
+  fi
+  $command validate ${command_args#run} > /dev/null 2>&1
+  eend $?
+}
+ 
+reload() {
+  if ! service_started "${SVCNAME}" ; then
+      eerror "${SVCNAME} isn't running" && return 1
+  fi
+  checkconfig || { eerror "Invalid configuration file !" && return 1; }
+ 
+  ebegin "Reloading ${SVCNAME}"
+  $command reload --force ${command_args#run} > /dev/null 2>&1
+  eend $?
+}

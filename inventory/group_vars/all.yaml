@@ -52,6 +52,9 @@ env_vars:
   ROCKSDB_LIB_DIR: "/usr/lib"
   PROTOC: "protoc-c"
 
+# Caddy options
+caddy_base_url: https://github.com/caddyserver/caddy/releases/download/v{{ caddy_version }}
+
 # Bitcoin options
 bitcoin_base_url: >-
   {%- if bitcoin_role == 'knots' -%}
