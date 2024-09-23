@@ -45,6 +45,12 @@ env_vars:
   CXXFLAGS: "-O3 -pipe -march=native -fPIE"
   LDFLAGS: "-pie -Wl,--as-needed"
   MAKEFLAGS: "-j$(nproc)"
+  CARGO_HOME: "./.cargo"
+  npm_config_cache: "./npm-cache"
+  npm_config_devdir: "./.gyp"
+  ROCKSDB_INCLUDE_DIR: "/usr/include"
+  ROCKSDB_LIB_DIR: "/usr/lib"
+  PROTOC: "protoc-c"
 
 # Bitcoin options
 bitcoin_base_url: >-
