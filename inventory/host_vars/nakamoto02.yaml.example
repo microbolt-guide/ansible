@@ -1,0 +1,21 @@
+---
+# Bitcoin options
+bitcoin_config_options:
+  - assumevalid=0
+  - blockfilterindex=1
+  - blocksonly=1
+  - coinstatsindex=1
+  - dbcache={{ bitcoin_dbcache }}
+  - i2psam=127.0.0.1:7656
+  - onion=127.0.0.1:9050
+  - peerblockfilters=1
+  - peerbloomfilters=1
+  - zmqpubhashblock=tcp://127.0.0.1:8433
+  - zmqpubrawblock=tcp://127.0.0.1:28332
+  - zmqpubrawtx=tcp://127.0.0.1:28333
+  - datacarrier=0
+  - permitbaremultisig=0
+  - debug=i2p
+  - debug=tor
+  - server=1
+  - prune=550
