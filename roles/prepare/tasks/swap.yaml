@@ -1,28 +1,35 @@
 ---
-- name: Allocate swapfile
-  ansible.builtin.shell:
-    cmd: dd if=/dev/zero of=/var/swapfile bs=1K count={{ swap_size }}M
-
-- name: Make swap on the file
-  ansible.builtin.shell:
-    cmd: mkswap /var/swapfile
-
-- name: Set permissions on swapfile
-  ansible.builtin.file:
+- name: Check if swapfile exists
+  ansible.builtin.stat:
     path: /var/swapfile
-    mode: '0600'
+  register: swapfile_stat
 
-- name: Put swapfile on fstab
-  ansible.builtin.lineinfile:
-    path: /etc/fstab
-    line: '/var/swapfile none swap sw 0 0'
+- block:
+  - name: Allocate swapfile
+    ansible.builtin.shell:
+      cmd: dd if=/dev/zero of=/var/swapfile bs=1K count={{ swap_size }}M
 
-- name: Enable swap on boot
-  ansible.builtin.service:
-    name: swap
-    enabled: true
-    state: started
+  - name: Make swap on the file
+    ansible.builtin.shell:
+      cmd: mkswap /var/swapfile
 
-- name: Start swap
-  ansible.builtin.command:
-    cmd: swapon -a
+  - name: Set permissions on swapfile
+    ansible.builtin.file:
+      path: /var/swapfile
+      mode: '0600'
+
+  - name: Put swapfile on fstab
+    ansible.builtin.lineinfile:
+      path: /etc/fstab
+      line: '/var/swapfile none swap sw 0 0'
+
+  - name: Enable swap on boot
+    ansible.builtin.service:
+      name: swap
+      enabled: true
+      state: started
+
+  - name: Start swap
+    ansible.builtin.command:
+      cmd: swapon -a
+  when: not swapfile_stat.stat.exists
