@@ -1,6 +1,8 @@
 ---
 # System options
 ethernet: eth0
+swap: true
+swap_size: 4 # in GB
 second_disk: false
 second_disk_dev: /dev/sdb
 second_disk_part: true
@@ -12,7 +14,7 @@ reverse_proxy_role: caddy # caddy or nginx
 bitcoin_role: knots # knots or core
 electrum_role: fulcrum # fulcrum or electrs
 explorer_role: btcrpc # btcrpc or mempool
-lightning_role: lnd # lnd or c-lightning
+lightning_role: lnd # lnd or cln (not ready yet)
 
 # Tor options
 ssh_tor: false
@@ -39,18 +41,34 @@ ansible_become_method: doas
 
 # Compile options
 env_vars:
-  CC: "clang"
-  CXX: "clang++"
-  CFLAGS: "-O3 -pipe -march=native -fPIE"
-  CXXFLAGS: "-O3 -pipe -march=native -fPIE"
-  LDFLAGS: "-pie -Wl,--as-needed"
-  MAKEFLAGS: "-j$(nproc)"
-  CARGO_HOME: "./.cargo"
-  npm_config_cache: "./npm-cache"
-  npm_config_devdir: "./.gyp"
-  ROCKSDB_INCLUDE_DIR: "/usr/include"
-  ROCKSDB_LIB_DIR: "/usr/lib"
-  PROTOC: "protoc-c"
+  - key: EDITOR
+    value: vi
+  - key: SU
+    value: "{{ ansible_become_method }}"
+  - key: CC
+    value: clang
+  - key: CXX
+    value: clang++
+  - key: CFLAGS
+    value: "-O3 -pipe -march=native -fPIE"
+  - key: CXXFLAGS
+    value: "-O3 -pipe -march=native -fPIE"
+  - key: LDFLAGS
+    value: "-pie -Wl,--as-needed"
+  - key: MAKEFLAGS
+    value: -j$(nproc)
+  - key: CARGO_HOME
+    value: ./.cargo
+  - key: npm_config_cache
+    value: ./npm-cache
+  - key: npm_config_devdir
+    value: ./.gyp
+  - key: ROCKSDB_INCLUDE_DIR
+    value: /usr/include
+  - key: ROCKSDB_LIB_DIR
+    value: /usr/lib
+  - key: PROTOC
+    value: protoc-c
 
 # Caddy options
 caddy_base_url: https://github.com/caddyserver/caddy/releases/download/v{{ caddy_version }}
@@ -75,12 +93,13 @@ bitcoin_build_deps:
   - clang
   - chrpath
   - file
+  - gnupg
   - libevent-dev
   - libtool
   - make
   - pkgconf
   - zeromq-dev
-bitcoin_make_deps:
+bitcoin_runtime_deps:
   - libevent
   - libsodium
   - libstdc++
@@ -107,6 +126,23 @@ bitcoin_config_options:
 
 # Electrum options
 fulcrum_keys_url: https://raw.githubusercontent.com/Electron-Cash/keys-n-hashes/master/pubkeys/calinkey.txt
+fulcrum_build_deps:
+  - autoconf
+  - g++
+  - git
+  - gnupg
+  - jemalloc-dev
+  - lz4-dev
+  - make
+  - pkgconf
+  - qt6-qtbase-dev
+  - rocksdb-dev
+  - zeromq-dev
+fulcrum_runtime_deps:
+  - jemalloc
+  - libzmq
+  - qt6-qtbase
+  - rocksdb
 fulcrum_config_options:
   - "#datadir = /path/to/a/dir"
   - "#rpcuser = Bob_The_Banker"
