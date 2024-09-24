@@ -37,7 +37,6 @@
       chdir: /tmp/bitcoin-{{ bitcoin_version }}
     register: make_result
     when: configure_result is not failed
-  environment: "{{ env_vars }}"
   become_user: "{{ ansible_user }}"
   when: verify_result is not failed
 
@@ -63,14 +62,12 @@
     ansible.builtin.file:
       path: "{{ item }}"
       state: absent
-    ignore_errors: true
     loop:
       - "/tmp/bitcoin-{{ bitcoin_version }}*"
       - "/tmp/SHA256SUMS*"
 
   - name: Remove build dependencies
     community.general.apk:
-      name: "{{ item }}"
+      name: "{{ bitcoin_build_deps | join(',') }}"
       state: absent
-    loop: "{{ bitcoin_build_deps }}"
   when: install_result is not failed

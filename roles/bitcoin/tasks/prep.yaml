@@ -41,63 +41,63 @@
       append: true
       state: present
 
-  - name: Create a symbolic link bitcoin to {{ ansible_user }} home
-    ansible.builtin.file:
-      src: /var/lib/bitcoind
-      dest: "$HOME/.bitcoin"
-      state: link
-      force: true
-      follow: false
+  - block:
+    - name: Create a symbolic link bitcoin to {{ ansible_user }} home
+      ansible.builtin.file:
+        src: /var/lib/bitcoind
+        dest: "$HOME/.bitcoin"
+        state: link
+        force: true
+        follow: false
+
+    - name: Download bitcoin tarball
+      ansible.builtin.get_url:
+        url: "{{ bitcoin_base_url }}/bitcoin-{{ bitcoin_version }}.tar.gz"
+        dest: "/tmp"
+        checksum: "sha256:{{ bitcoin_base_url }}/SHA256SUMS"
+
+    - name: Download bitcoin sha256sums
+      ansible.builtin.get_url:
+        url: "{{ bitcoin_base_url }}/SHA256SUMS"
+        dest: "/tmp"
+
+    - name: Download bitcoin sha256sums.asc
+      ansible.builtin.get_url:
+        url: "{{ bitcoin_base_url }}/SHA256SUMS.asc"
+        dest: "/tmp"
+
+    - name: Import PGP keys from GitHub repository
+      ansible.builtin.shell:
+        cmd: |
+          wget -qO- "{{ bitcoin_keys_url }}" |\
+            grep download_url |\
+            grep -oE "https://[a-zA-Z0-9./-]+" |\
+            while read url; do \
+                wget -qO- "$url" |\
+                gpg --import \
+            ; done
+      register: import_keys_result
+
+    - name: Debug import_keys_result
+      ansible.builtin.debug:
+        var: import_keys_result.stderr_lines
+
+    - name: Verify bitcoin tarball
+      ansible.builtin.shell:
+        cmd: gpg --verify SHA256SUMS.asc
+      args:
+        chdir: /tmp
+      register: verify_result
+      failed_when: "'Good signature' not in verify_result.stderr"
+
+    - name: Debug verify_result
+      ansible.builtin.debug:
+        var: verify_result.stderr_lines
+
+    - name: Extract bitcoin tarball
+      ansible.builtin.shell:
+        cmd: tar xzf bitcoin-{{ bitcoin_version }}.tar.gz
+      args:
+        chdir: /tmp
     become_user: "{{ ansible_user }}"
-
-  - name: Download bitcoin tarball
-    ansible.builtin.get_url:
-      url: "{{ bitcoin_base_url }}/bitcoin-{{ bitcoin_version }}.tar.gz"
-      dest: "/tmp"
-      checksum: "sha256:{{ bitcoin_base_url }}/SHA256SUMS"
-
-  - name: Download bitcoin sha256sums
-    ansible.builtin.get_url:
-      url: "{{ bitcoin_base_url }}/SHA256SUMS"
-      dest: "/tmp"
-
-  - name: Download bitcoin sha256sums.asc
-    ansible.builtin.get_url:
-      url: "{{ bitcoin_base_url }}/SHA256SUMS.asc"
-      dest: "/tmp"
-
-  - name: Import PGP keys from GitHub repository
-    ansible.builtin.shell:
-      cmd: |
-        wget -qO- "{{ bitcoin_keys_url }}" |\
-          grep download_url |\
-          grep -oE "https://[a-zA-Z0-9./-]+" |\
-          while read url; do \
-              wget -qO- "$url" |\
-              gpg --import \
-          ; done
-    register: import_keys_result
-
-  - name: Debug import_keys_result
-    ansible.builtin.debug:
-      var: import_keys_result.stderr_lines
-
-  - name: Verify bitcoin tarball
-    ansible.builtin.shell:
-      cmd: gpg --verify SHA256SUMS.asc
-    args:
-      chdir: /tmp
-    register: verify_result
-    failed_when: "'Good signature' not in verify_result.stderr"
-
-  - name: Debug verify_result
-    ansible.builtin.debug:
-      var: verify_result.stderr_lines
-
-  - name: Extract bitcoin tarball
-    ansible.builtin.shell:
-      cmd: tar xzf bitcoin-{{ bitcoin_version }}.tar.gz
-    args:
-      chdir: /tmp
-  become_user: "{{ ansible_user }}"
   when: bitcoin_version_result is not failed

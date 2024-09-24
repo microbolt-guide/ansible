@@ -1,23 +1,21 @@
 ---
-- block:
-  - name: Install build dependencies
-    ansible.builtin.apk:
-      name: "{{ item }}"
-      state: latest
-      update_cache: true
-    loop: "{{ bitcoin_build_deps }}"
+- name: Install build dependencies
+  ansible.builtin.apk:
+    name: "{{ bitcoin_build_deps | join(',') }}"
+    state: latest
+    update_cache: true
+  when: bitcoin_build_deps
 
-  - name: Install runtime dependencies
-    ansible.builtin.apk:
-      name: "{{ item }}"
-      state: latest
-      update_cache: true
-    loop: "{{ bitcoin_make_deps }}"
+- name: Install runtime dependencies
+  ansible.builtin.apk:
+    name: "{{ bitcoin_runtime_deps | join(',') }}"
+    state: latest
+    update_cache: true
+  when: bitcoin_runtime_deps
 
-  - name: Install man dependencies
-    ansible.builtin.apk:
-      name: man-pages,mandoc
-      state: latest
-      update_cache: true
-    when: bitcoin_man
-  when: verify_result is not failed
+- name: Install man dependencies
+  ansible.builtin.apk:
+    name: man-pages,mandoc
+    state: latest
+    update_cache: true
+  when: bitcoin_man
