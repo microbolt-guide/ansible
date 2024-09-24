@@ -5,6 +5,16 @@
     state: latest
     update_cache: true
 
+# Change 'linux-virt' to 'linux-lts'/'linux-edge' kernel package (set correct package name here)   #
+- name: Run Shell Command with Pipe and Capture Status
+  shell: "set -o pipefail; apk -u list | grep '^linux-virt'; echo $?"
+  register: pipe_status_result
+  changed_when: false
+
+- name: Extract Exit Status from Result
+  set_fact:
+    pipe_exit_status: "{{ pipe_status_result.stdout_lines[-1] }}"
+
 - name: Update all installed packages to the latest versions
   community.general.apk:
     upgrade: true
@@ -17,3 +27,4 @@
     pre_reboot_delay: 0
     post_reboot_delay: 30
     test_command: uptime
+  when: pipe_exit_status == 0
