@@ -18,6 +18,7 @@
   ansible.builtin.service:
     name: "{{ item }}"
     enabled: true
+    state: started
   loop:
     - iptables
     - ip6tables
