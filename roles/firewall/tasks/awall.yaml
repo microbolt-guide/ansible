@@ -14,15 +14,6 @@
     - ip_tables
     - ip6_tables
 
-- name: Make iptables start on boot
-  ansible.builtin.service:
-    name: "{{ item }}"
-    enabled: true
-    state: started
-  loop:
-    - iptables
-    - ip6tables
-
 - name: Deploy awall base-config and ssh
   ansible.builtin.template:
     src: "templates/{{ item }}.j2"
@@ -39,3 +30,12 @@
     name: [ base-config ssh ]
     state: enabled
     activate: true
+
+- name: Make iptables start on boot and start it
+  ansible.builtin.service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - iptables
+    - ip6tables
