@@ -51,8 +51,8 @@
   - block:
     - name: Cleanup caddy
       ansible.builtin.file:
-        path: "caddy_{{ caddy_version }}_linux_amd64.tar.gz"
         state: absent
+        path: /tmp/caddy_{{ caddy_version }}_linux_amd64.tar.gz
 
     - name: Add caddy necessary modules
       ansible.builtin.shell:
@@ -60,8 +60,8 @@
 
     - name: Create directory for caddy configuration
       ansible.builtin.file:
-        path: "{{ item }}"
         state: directory
+        path: "{{ item }}"
       loop:
         - /etc/caddy/sites
         - /etc/caddy/streams
