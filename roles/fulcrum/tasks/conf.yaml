@@ -36,4 +36,4 @@
       name: fulcrum
       enabled: true
       state: started
-  when: install_result is not failed
+  when: make_result is not failed

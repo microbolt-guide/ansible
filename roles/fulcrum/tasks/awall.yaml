@@ -2,13 +2,13 @@
 - name: Deploy awall configuration
   ansible.builtin.template:
     src: templates/awall.j2
-    dest: /etc/awall/optional/fulcrum.json
+    dest: /etc/awall/optional/electrum.json
     owner: root
     group: root
     mode: '0644'
 
-- name: Enable fulcrum policy
+- name: Enable electrum policy
   community.general.awall:
-    name: fulcrum
+    name: electrum
     state: enabled
     activate: true
