@@ -2,7 +2,7 @@
 - block:
   - name: Download banner.txt
     ansible.builtin.get_url:
-      url: https://gist.githubusercontent.com/doitwithnotepad/4472a92414223672d9ab4c3b55d0cd23/raw/5241bfb860e709d4f6cf8eb436c264f9cc264d79/banner.txt
+      url: https://gist.githubusercontent.com/doitwithnotepad/4472a92414223672d9ab4c3b55d0cd23/raw/c68c8a8ba7f0a0ce3b3bb3bc525c5ad6745af592/banner.txt
       dest: /etc/fulcrum/banner.txt
       owner: fulcrum
       group: fulcrum
@@ -24,16 +24,16 @@
       src: logrotate.j2
       dest: /etc/logrotate.d/fulcrum
       mode: '0644'
-  
+
   - name: Fulcrum init script
     ansible.builtin.template:
       src: init.j2
       dest: /etc/init.d/fulcrum
       mode: '0755'
-  
+
   - name: Start fulcrum
     ansible.builtin.service:
       name: fulcrum
       enabled: true
       state: started
-  when: make_result is not failed
+  when: install_result is not failed

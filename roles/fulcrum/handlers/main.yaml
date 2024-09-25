@@ -1,0 +1,10 @@
+---
+- name: cleanup
+  ansible.builtin.file:
+    state: absent
+    path: "/tmp/Fulcrum"
+
+- name: remove_build_deps
+  community.general.apk:
+    name: "{{ fulcrum_build_deps | join(',') }}"
+    state: absent

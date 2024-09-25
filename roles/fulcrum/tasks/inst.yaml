@@ -1,44 +1,4 @@
----
-- name: Get version number of latest fulcrum release
-  ansible.builtin.shell:
-    cmd: curl --silent 'https://api.github.com/repos/cculianu/Fulcrum/releases/latest' |  grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
-  register: fulcrum_version_result
-
-- block:
-  - name: Set fulcrum_version fact
-    set_fact:
-      fulcrum_version: "{{ fulcrum_version_result.stdout }}"
-
-  - name: Download fulcrum repository
-    ansible.builtin.shell:
-      cmd: git clone --branch v{{ fulcrum_version }} https://github.com/cculianu/Fulcrum.git
-    args:
-      chdir: /tmp
-    register: import_keys_result
-
-  - name: Import PGP keys from GitHub repository
-    ansible.builtin.shell:
-      cmd: wget -qO- "{{ fulcrum_keys_url }}" | gpg --import
-    register: import_keys_result
-
-  - name: Debug import_keys_result
-    ansible.builtin.debug:
-      var: import_keys_result.stderr_lines
-
-  - name: Verify fulcrum tag
-    ansible.builtin.shell:
-      cmd: git verify-commit v{{ fulcrum_version }}
-    args:
-      chdir: /tmp/Fulcrum
-    register: verify_result
-    failed_when: "'Good signature' not in verify_result.stderr"
-
-  - name: Debug verify_result
-    ansible.builtin.debug:
-      var: verify_result.stderr_lines
-  become_user: "{{ ansible_user }}"
-  when: fulcrum_version_result is not failed
-  
+---  
 - block:
   - name: Configure fulcrum
     ansible.builtin.shell:
@@ -52,14 +12,21 @@
 
   - name: Compile fulcrum
     ansible.builtin.shell:
-      cmd: make -C build
+      cmd: |
+        CC=gcc \
+        CXX=g++ \
+        make -C build
     args:
       chdir: /tmp/Fulcrum
     register: make_result
     when: configure_result is not failed
-  environment: "{{ env_vars | combine({'CC': 'gcc', 'CXX': 'g++'}) }}"
   become_user: "{{ ansible_user }}"
   when: verify_result is not failed
+
+  rescue:
+    - ansible.builtin.meta: notify
+      args:
+        handler_name: cleanup
 
 - block:
   - name: Install Fulcrum binary
@@ -101,3 +68,9 @@
     ansible.builtin.shell:
       cmd: strip /usr/bin/Fulcrum
   when: make_result is not failed
+  always:
+    - ansible.builtin.meta: notify
+      args:
+        handler_name:
+          - cleanup
+          - remove_build_deps

@@ -1,27 +1,14 @@
 ---
-- name: Install make dependencies
+- name: Install build dependencies
   ansible.builtin.apk:
-    name: "{{ item }}"
+    name: "{{ fulcrum_build_deps | join(',') }}"
     state: latest
     update_cache: true
-  loop:
-    - autoconf
-    - g++
-    - git
-    - jemalloc-dev
-    - lz4-dev
-    - make
-    - pkgconf
-    - qt6-qtbase-dev
-    - rocksdb-dev
-    - zeromq-dev
+  when: fulcrum_build_deps
 
 - name: Install runtime dependencies
   ansible.builtin.apk:
-    name: "{{ item }}"
+    name: "{{ fulcrum_runtime_deps | join(',') }}"
     state: latest
     update_cache: true
-  loop:
-    - libzmq
-    - qt6-qtbase
-    - rocksdb
+  when: fulcrum_runtime_deps

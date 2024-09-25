@@ -1,46 +1,92 @@
 ---
-- name: Create fulcrum system group
-  ansible.builtin.group:
-    system: true
-    name: fulcrum
-    state: present
+- name: Get version number of latest fulcrum release
+  ansible.builtin.shell:
+    cmd: wget -qO- 'https://api.github.com/repos/cculianu/Fulcrum/releases/latest' |  grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
+  register: fulcrum_version_result
 
-- name: Create fulcrum system user
-  ansible.builtin.user:
-    system: true
-    password: "!"
-    create_home: false
-    home: /dev/null
-    shell: /sbin/nologin
-    group: fulcrum
-    comment: "fulcrum"
-    name: fulcrum
-    state: present
+- block:
+  - name: Set fulcrum_version fact
+    set_fact:
+      fulcrum_version: "{{ fulcrum_version_result.stdout }}"
 
-- name: Add user fulcrum to bitcoin group
-  ansible.builtin.user:
-    name: fulcrum
-    groups: bitcoin
-    append: true
-    state: present
+  - name: Create fulcrum system group
+    ansible.builtin.group:
+      system: true
+      name: fulcrum
+      state: present
 
-- name: Add user satoshi to fulcrum group
-  ansible.builtin.user:
-    name: satoshi
-    groups: fulcrum
-    append: true
-    state: present
+  - name: Create fulcrum system user
+    ansible.builtin.user:
+      system: true
+      password: "!"
+      create_home: false
+      home: /dev/null
+      shell: /sbin/nologin
+      group: fulcrum
+      comment: "fulcrum"
+      name: fulcrum
+      state: present
 
-# Firewall
-- include_tasks: awall.yaml
-  when: firewall_role == 'awall'
+  - name: Add user fulcrum to bitcoin group
+    ansible.builtin.user:
+      name: fulcrum
+      groups: bitcoin
+      append: true
+      state: present
 
-- include_tasks: ufw.yaml
-  when: firewall_role == 'ufw'
+  - name: Add user {{ ansible_user }} to fulcrum group
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups: fulcrum
+      append: true
+      state: present
 
-# Reverse Proxy
-- include_tasks: caddy.yaml
-  when: reverse_proxy_role == 'caddy'
+  # Firewall
+  - include_tasks: awall.yaml
+    when: firewall_role == 'awall'
 
-- include_tasks: nginx.yaml
-  when: reverse_proxy_role == 'nginx'
+  - include_tasks: ufw.yaml
+    when: firewall_role == 'ufw'
+
+  # Reverse Proxy
+  - include_tasks: caddy.yaml
+    when: reverse_proxy_role == 'caddy'
+
+  - include_tasks: nginx.yaml
+    when: reverse_proxy_role == 'nginx'
+
+  - block:
+    - name: Download fulcrum repository
+      ansible.builtin.shell:
+        cmd: git clone --branch v{{ fulcrum_version }} https://github.com/cculianu/Fulcrum.git
+      args:
+        chdir: /tmp
+      register: import_keys_result
+
+    - name: Import PGP keys from GitHub repository
+      ansible.builtin.shell:
+        cmd: wget -qO- "{{ fulcrum_keys_url }}" | gpg --import
+      register: import_keys_result
+
+    - name: Debug import_keys_result
+      ansible.builtin.debug:
+        var: import_keys_result.stderr_lines
+
+    - name: Verify fulcrum tag
+      ansible.builtin.shell:
+        cmd: git verify-commit v{{ fulcrum_version }}
+      args:
+        chdir: /tmp/Fulcrum
+      register: verify_result
+      failed_when: "'Good signature' not in verify_result.stderr"
+
+    - name: Debug verify_result
+      ansible.builtin.debug:
+        var: verify_result.stderr_lines
+    become_user: "{{ ansible_user }}"
+  
+  rescue:
+    - ansible.builtin.meta: notify
+      args:
+        handler_name: cleanup
+  when: fulcrum_version_result is not failed

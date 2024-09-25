@@ -1,3 +1,8 @@
 :{{ electrum_port_ssl }} {
-  reverse_proxy 127.0.0.1:{{ electrum_port_tcp }}
+        route {
+                tls 
+                proxy {
+                        upstream 127.0.0.1:{{ electrum_port_tcp }}
+                }
+        }
 }
