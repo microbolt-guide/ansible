@@ -15,22 +15,22 @@
     ansible.builtin.lineinfile:
       path: /etc/bitcoin/bitcoin.conf
       regexp: '^#?{{ item.split("=")[0] }}='
-      line: "{{ item }}"
+      line: '{{ item }}'
       state: present
     loop: "{{ bitcoin_config_options }}"
-  
+
   - name: Bitcoin logrotate script
     ansible.builtin.template:
       src: logrotate.j2
       dest: /etc/logrotate.d/bitcoind
       mode: '0644'
-  
+
   - name: Bitcoin init script
     ansible.builtin.template:
       src: init.j2
       dest: /etc/init.d/bitcoind
       mode: '0755'
-  
+
   - name: Start bitcoind
     ansible.builtin.service:
       name: bitcoind

@@ -1,0 +1,16 @@
+---
+- name: cleanup
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+  - "/tmp/bitcoin-{{ bitcoin_version }}.tar.gz"
+  - "/tmp/bitcoin-{{ bitcoin_version }}"
+  - "/tmp/SHA256SUMS.asc"
+  - "/tmp/SHA256SUMS"
+
+- name: remove_build_deps
+  community.general.apk:
+    name: "{{ bitcoin_build_deps | join(',') }}"
+    state: absent
+  ignore_errors: true

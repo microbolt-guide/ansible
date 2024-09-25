@@ -40,6 +40,11 @@
   become_user: "{{ ansible_user }}"
   when: verify_result is not failed
 
+  rescue:
+    - ansible.builtin.meta: notify
+      args:
+        handler_name: cleanup
+
 - name: Install bitcoin
   ansible.builtin.shell:
     cmd: |
@@ -56,18 +61,6 @@
     chdir: /tmp/bitcoin-{{ bitcoin_version }}
   register: install_result
   when: make_result is not failed
-
-- block:
-  - name: Cleanup bitcoin
-    ansible.builtin.file:
-      path: "{{ item }}"
-      state: absent
-    loop:
-      - "/tmp/bitcoin-{{ bitcoin_version }}*"
-      - "/tmp/SHA256SUMS*"
-
-  - name: Remove build dependencies
-    community.general.apk:
-      name: "{{ bitcoin_build_deps | join(',') }}"
-      state: absent
-  when: install_result is not failed
+  notify:
+    - cleanup
+    - remove_build_deps
