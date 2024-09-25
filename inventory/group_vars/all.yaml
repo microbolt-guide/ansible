@@ -31,7 +31,7 @@ electrum_port_tcp: 50001
 electrum_port_ssl: 50002
 
 ################################################################################
-# Do not edit below this line unless you know what you are doing               #
+# DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING               #
 ################################################################################
 
 # Ansible options
@@ -76,9 +76,9 @@ caddy_base_url: https://github.com/caddyserver/caddy/releases/download/v{{ caddy
 # Bitcoin options
 bitcoin_base_url: >-
   {%- if bitcoin_role == 'knots' -%}
-    https://bitcoin{{ bitcoin_role }}.org/files/{{ bitcoin_version | regex_replace('\..*$', '') }}.x/{{ bitcoin_version }}
+    https://bitcoinknots.org/files/{{ bitcoin_version | regex_replace('\..*$', '') }}.x/{{ bitcoin_version }}
   {%- elif bitcoin_role == 'core' -%}
-    https://bitcoin{{ bitcoin_role }}.org/bin/bitcoin-{{ bitcoin_role }}-{{ bitcoin_version }}
+    https://bitcoincore.org/bin/bitcoin-core-{{ bitcoin_version }}
   {%- endif -%}
 bitcoin_keys_url: >-
   {%- if bitcoin_role == 'knots' -%}
@@ -120,8 +120,7 @@ bitcoin_config_options:
   - zmqpubrawtx=tcp://127.0.0.1:28333
   - datacarrier=0
   - permitbaremultisig=0
-  - debug=i2p
-  - debug=tor
+  - "debug=i2p\ndebug=tor"
   - server=1
 
 # Electrum options
@@ -153,6 +152,16 @@ fulcrum_config_options:
   - "peering = false"
 
 electrs_keys_url: https://romanzey.de/pgp.txt
+electrs_build_deps:
+  - cargo
+  - cargo-auditable
+  - clang-dev
+  - cmake
+  - git
+  - gnupg
+  - rocksdb-dev
+electrs_runtime_deps:
+  - rocksdb
 electrs_config_options:
   - "cookie_file = \"/var/lib/bitcoind/.cookie\""
   - "#db_dir = \"/some/fast/storage/with/big/size\""
