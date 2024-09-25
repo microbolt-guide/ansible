@@ -1,46 +1,92 @@
 ---
-- name: Create electrs system group
-  ansible.builtin.group:
-    system: true
-    name: electrs
-    state: present
+- name: Get version number of latest electrs release
+  ansible.builtin.shell:
+    cmd: wget -qO- 'https://api.github.com/repos/romanz/electrs/releases/latest' | grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
+  register: electrs_version_result
 
-- name: Create electrs system user
-  ansible.builtin.user:
-    system: true
-    password: "!"
-    create_home: false
-    home: /dev/null
-    shell: /sbin/nologin
-    group: electrs
-    comment: "electrs"
-    name: electrs
-    state: present
+- block:
+  - name: Set electrs_version fact
+    set_fact:
+      electrs_version: "{{ electrs_version_result.stdout }}"
 
-- name: Add user electrs to bitcoin group
-  ansible.builtin.user:
-    name: electrs
-    groups: bitcoin
-    append: true
-    state: present
+  - name: Create electrs system group
+    ansible.builtin.group:
+      system: true
+      name: electrs
+      state: present
 
-- name: Add user satoshi to electrs group
-  ansible.builtin.user:
-    name: satoshi
-    groups: electrs
-    append: true
-    state: present
+  - name: Create electrs system user
+    ansible.builtin.user:
+      system: true
+      password: "!"
+      create_home: false
+      home: /dev/null
+      shell: /sbin/nologin
+      group: electrs
+      comment: "electrs"
+      name: electrs
+      state: present
 
-# Firewall
-- include_tasks: awall.yaml
-  when: firewall_role == 'awall'
+  - name: Add user electrs to bitcoin group
+    ansible.builtin.user:
+      name: electrs
+      groups: bitcoin
+      append: true
+      state: present
 
-- include_tasks: ufw.yaml
-  when: firewall_role == 'ufw'
+  - name: Add user {{ ansible_user }} to electrs group
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups: electrs
+      append: true
+      state: present
 
-# Reverse Proxy
-- include_tasks: caddy.yaml
-  when: reverse_proxy_role == 'caddy'
+  # Firewall
+  - include_tasks: awall.yaml
+    when: firewall_role == 'awall'
 
-- include_tasks: nginx.yaml
-  when: reverse_proxy_role == 'nginx'
+  - include_tasks: ufw.yaml
+    when: firewall_role == 'ufw'
+
+  # Reverse Proxy
+  - include_tasks: caddy.yaml
+    when: reverse_proxy_role == 'caddy'
+
+  - include_tasks: nginx.yaml
+    when: reverse_proxy_role == 'nginx'
+
+  - block:
+    - name: Download electrs repository
+      ansible.builtin.shell:
+        cmd: git clone --branch v{{ electrs_version }} https://github.com/romanz/electrs.git
+      args:
+        chdir: /tmp
+      register: import_keys_result
+
+    - name: Import PGP keys from GitHub repository
+      ansible.builtin.shell:
+        cmd: wget -qO- "{{ electrs_keys_url }}" | gpg --import
+      register: import_keys_result
+
+    - name: Debug import_keys_result
+      ansible.builtin.debug:
+        var: import_keys_result.stderr_lines
+
+    - name: Verify electrs tag
+      ansible.builtin.shell:
+        cmd: git verify-tag v{{ electrs_version }}
+      args:
+        chdir: /tmp/electrs
+      register: verify_result
+      failed_when: "'Good signature' not in verify_result.stderr"
+
+    - name: Debug verify_result
+      ansible.builtin.debug:
+        var: verify_result.stderr_lines
+    become_user: "{{ ansible_user }}"
+  
+  rescue:
+    - ansible.builtin.meta: notify
+      args:
+        handler_name: cleanup
+  when: electrs_version_result is not failed

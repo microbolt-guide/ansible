@@ -2,13 +2,13 @@
 - name: Deploy awall configuration
   ansible.builtin.template:
     src: templates/awall.j2
-    dest: /etc/awall/optional/electrs.json
+    dest: /etc/awall/optional/electrum.json
     owner: root
     group: root
     mode: '0644'
 
-- name: Enable electrs policy
+- name: Enable electrum policy
   community.general.awall:
-    name: electrs
+    name: electrum
     state: enabled
     activate: true

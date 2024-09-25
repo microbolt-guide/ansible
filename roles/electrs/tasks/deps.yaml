@@ -1,19 +1,12 @@
 ---
-- name: Install make dependencies
+- name: Install build dependencies
   ansible.builtin.apk:
-    name: "{{ item }}"
+    name: "{{ electrs_build_deps | join(',') }}"
     state: latest
     update_cache: true
-  loop:
-    - cargo
-    - cargo-auditable
-    - clang-dev
-    - cmake
-    - git
-    - rocksdb-dev
 
 - name: Install runtime dependencies
   ansible.builtin.apk:
-    name: rocksdb
+    name: "{{ electrs_runtime_deps | join(',') }}"
     state: latest
     update_cache: true
