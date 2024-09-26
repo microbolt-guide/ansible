@@ -1,0 +1,77 @@
+---
+- block:
+  - name: Patch fixes vulnerability in unused sharp package
+    ansible.builtin.shell:
+      cmd: |
+        sed '/"node_modules\/sharp": {/,+21{d}; /sharp/d' npm-shrinkwrap.json > _
+        mv -f _ npm-shrinkwrap.json
+    args:
+      chdir: /tmp/btc-rpc-explorer
+    register: patch_result
+
+  - name: Install dependencies
+    community.general.npm:
+      ci: true
+      path: /tmp/btc-rpc-explorer
+  
+  - name: Install zeromq dependency
+    community.general.npm:
+      name: zeromq
+      state: latest
+      path: /tmp/btc-rpc-explorer
+    register: install_result
+
+  become_user: "{{ ansible_user }}"
+  when: verify_result is not failed
+
+  rescue:
+    - ansible.builtin.meta: notify
+      args:
+        handler_name: cleanup
+
+- block:
+  - name: Ensure /etc/btc-rpc-explorer directory exists
+    ansible.builtin.file:
+      path: /etc/btc-rpc-explorer
+      state: directory
+      owner: btc-rpc-explorer
+      group: btc-rpc-explorer
+      mode: '0755'
+
+  - name: Install btc-rpc-explorer config
+    ansible.builtin.copy:
+      src: /tmp/btc-rpc-explorer/.env-sample
+      dest: /etc/btc-rpc-explorer/btc-rpc-explorer.env
+      owner: btc-rpc-explorer
+      group: btc-rpc-explorer
+      mode: '0660'
+      remote_src: yes
+
+  - name: Install btc-rpc-explorer lib
+    ansible.builtin.copy:
+      src: /tmp/btc-rpc-explorer
+      dest: /var/lib/btc-rpc-explorer
+      owner: root
+      group: root
+      mode: '0755'
+      remote_src: yes
+
+  - name: Symlink btc-rpc-explorer lib
+    ansible.builtin.file:
+      src: /var/lib/btc-rpc-explorer
+      path: /usr/lib/node_modules/btc-rpc-explorer
+      state: link
+
+  - name: Symlink btc-rpc-explorer binary
+    ansible.builtin.file:
+      src: ../lib/node_modules/btc-rpc-explorer/bin/cli.js
+      path: /usr/bin/btc-rpc-explorer
+      state: link
+
+  when: install_result is not failed
+  always:
+    - ansible.builtin.meta: notify
+      args:
+        handler_name:
+          - cleanup
+          - remove_build_deps

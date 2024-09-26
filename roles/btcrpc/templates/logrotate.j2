@@ -1,0 +1,13 @@
+/var/log/btc-rpc-explorer/*.log {
+    weekly
+    missingok
+    rotate 104
+    compress
+    delaycompress
+    notifempty
+    create 0640 btc-rpc-explorer btc-rpc-explorer
+    sharedscripts
+    postrotate
+        killall -HUP `cat /run/btc-rpc-explorer/btc-rpc-explorer.pid`
+    endscript
+}

@@ -1,0 +1,71 @@
+#!/sbin/openrc-run
+ 
+: ${BTCRPCEXPL_ENVFILE:=/etc/btc-rpc-explorer/btc-rpc-explorer.env}
+: ${BTCRPCEXPL_DATADIR:=/var/lib/btc-rpc-explorer}
+: ${BTCRPCEXPL_LOGDIR:=/var/log/btc-rpc-explorer}
+: ${BTCRPCEXPL_USER:=btc-rpc-explorer}
+: ${BTCRPCEXPL_GROUP:=btc-rpc-explorer}
+: ${BTCRPCEXPL_BIN:=/usr/bin/btc-rpc-explorer}
+: ${BTCRPCEXPL_OPTS=${BTCRPCEXPL_OPTS}}
+: ${BTCRPCEXPL_SIGTERM_TIMEOUT:=600}
+ 
+BTCRPCEXPL_PIDDIR="/run/btc-rpc-explorer"
+ 
+name="BTC RPC Explorer"
+description="Simple, database-free Bitcoin blockchain explorer, via RPC to Bitcoin Core"
+ 
+directory="${BTCRPCEXPL_DATADIR}"
+required_files="${BTCRPCEXPL_ENVFILE}"
+pidfile="${BTCRPCEXPL_PIDDIR}/${SVCNAME}.pid"
+retry="${BTCRPCEXPL_SIGTERM_TIMEOUT}"
+ 
+command="${BTCRPCEXPL_BIN}"
+command_args="${BTCRPCEXPL_OPTS}"
+command_user="${BTCRPCEXPL_USER}:${BTCRPCEXPL_GROUP}"
+command_background="true"
+ 
+start_stop_daemon_args="--stdout ${BTCRPCEXPL_LOGDIR}/debug.log
+                        --stderr ${BTCRPCEXPL_LOGDIR}/debug.log"
+ 
+depend() {
+    need bitcoind
+ 
+    if service_started fulcrum; then
+        need fulcrum
+    elif service_started electrs; then
+        need electrs
+    else
+        if service_exists fulcrum; then
+            need fulcrum
+        elif service_exists electrs; then
+            need electrs
+        else
+            eerror "Neither fulcrum nor electrs is installed or started"
+            return 1
+        fi
+    fi
+}
+ 
+service_exists() {
+    rc-service --list | grep -q "^$1$"
+}
+ 
+start_pre() {
+    checkpath --file      --mode 0660 --owner "${command_user}" "${BTCRPCEXPL_ENVFILE}"
+    checkpath --directory --mode 0750 --owner "${command_user}" "${BTCRPCEXPL_DATADIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${BTCRPCEXPL_LOGDIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${BTCRPCEXPL_PIDDIR}"
+    checkconfig
+}
+ 
+checkconfig() {
+    if ! grep -qs '^BTCEXP_BITCOIND_COOKIE=' "${BTCRPCEXPL_ENVFILE}"
+    then
+        eerror ""
+        eerror "ERROR: You must set a BTCEXP_BITCOIND_COOKIE path to run"
+        eerror "BTC RPC Explorer."
+        eerror "The setting must appear in ${BTCRPCEXPL_ENVFILE}"
+        eerror ""
+        return 1
+    fi
+}

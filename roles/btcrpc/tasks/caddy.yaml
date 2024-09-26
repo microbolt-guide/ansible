@@ -1,0 +1,13 @@
+---
+- name: Deploy caddy configuration
+  ansible.builtin.template:
+    src: templates/caddy.j2
+    dest: /etc/caddy/sites/btc-rpc-explorer.caddy
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Restart Caddy service
+  ansible.builtin.service:
+    name: caddy
+    state: reloaded

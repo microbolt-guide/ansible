@@ -1,0 +1,25 @@
+---
+- name: Add Hidden Service btc-rpc-explorer server configuration
+  ansible.builtin.blockinfile:
+    path: /etc/tor/torrc
+    insertafter: '## This section is just for location-hidden services ##'
+    block: |
+      # Hidden Service BTC RPC Explorer
+      HiddenServiceDir /var/lib/tor/btc-rpc-explorer/
+      HiddenServiceVersion 3
+      HiddenServicePoWDefensesEnabled 1
+      HiddenServicePort 443 127.0.0.1:4000
+
+- name: Reload Tor service to apply configuration
+  ansible.builtin.service:
+    name: tor
+    state: reloaded
+
+- name: Get the btc-rpc-explorer Onion address
+  ansible.builtin.command:
+    cmd: cat /var/lib/tor/btc-rpc-explorer/hostname
+  register: btc-rpc-explorer_onion_address
+
+- name: Display btc-rpc-explorer Onion address
+  ansible.builtin.debug:
+    msg: "BTC RPC Expl Onion address: {{ btc-rpc-explorer_onion_address.stdout }}"

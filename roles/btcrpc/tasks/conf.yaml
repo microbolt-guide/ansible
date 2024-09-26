@@ -1,0 +1,31 @@
+---
+- block:
+  - name: btc-rpc-explorer configuration
+    ansible.builtin.lineinfile:
+      path: /etc/btc-rpc-explorer/btc-rpc-explorer.env
+      regexp: '^#?{{ item.split("=")[0] }}='
+      line: '{{ item }}'
+      state: present
+    loop: "{{ btcrpc_config_options }}"
+
+  - include_tasks: tor.yaml
+    when: tor_btcrpc
+
+  - name: BTC RPC Expl logrotate script
+    ansible.builtin.template:
+      src: logrotate.j2
+      dest: /etc/logrotate.d/btc-rpc-explorer
+      mode: '0644'
+  
+  - name: BTC RPC Expl init script
+    ansible.builtin.template:
+      src: init.j2
+      dest: /etc/init.d/btc-rpc-explorer
+      mode: '0755'
+  
+  - name: Start electrs
+    ansible.builtin.service:
+      name: btc-rpc-explorer
+      enabled: true
+      state: started
+  when: make_result is not failed

@@ -1,0 +1,10 @@
+---
+- name: cleanup
+  ansible.builtin.file:
+    state: absent
+    path: "/tmp/btc-rpc-explorer"
+
+- name: remove_build_deps
+  community.general.apk:
+    name: "{{ btcrpc_build_deps | join(',') }}"
+    state: absent
