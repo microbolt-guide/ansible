@@ -8,7 +8,7 @@
       HiddenServiceDir /var/lib/tor/electrum/
       HiddenServiceVersion 3
       HiddenServicePoWDefensesEnabled 1
-      HiddenServicePort 50002 127.0.0.1:50002
+      HiddenServicePort {{ electrum_port_ssl }} 127.0.0.1:{{ electrum_port_ssl }}
 
 - name: Reload Tor service to apply configuration
   ansible.builtin.service:

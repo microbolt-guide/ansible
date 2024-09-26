@@ -17,7 +17,7 @@
     loop: "{{ fulcrum_config_options }}"
 
   - include_tasks: tor.yaml
-    when: electrum_tor
+    when: tor_electrum
 
   - name: Fulcrum logrotate script
     ansible.builtin.template:

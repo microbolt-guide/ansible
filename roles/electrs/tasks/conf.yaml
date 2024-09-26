@@ -9,7 +9,7 @@
     loop: "{{ electrs_config_options }}"
 
   - include_tasks: tor.yaml
-    when: electrum_tor
+    when: tor_electrum
 
   - name: Electrs logrotate script
     ansible.builtin.template:
