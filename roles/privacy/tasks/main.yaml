@@ -62,5 +62,5 @@
     state: started
   loop: "{{ ['i2pd', 'tor'] }}"
 
-- include_tasks: ssh_tor.yaml
-  when: ssh_tor
+- include_tasks: tor_ssh.yaml
+  when: tor_ssh
