@@ -26,9 +26,3 @@
   community.general.ufw:
     logging: 'off'
     state: enabled
-
-- name: Make ufw start on boot
-  ansible.builtin.service:
-    name: ufw
-    enabled: true
-    state: started

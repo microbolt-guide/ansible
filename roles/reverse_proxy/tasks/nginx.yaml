@@ -61,9 +61,3 @@
     - /etc/nginx/streams-enabled
   loop_control:
     label: "{{ item }}"
-
-- name: Make nginx start on boot
-  ansible.builtin.service:
-    name: nginx
-    enabled: true
-    state: started

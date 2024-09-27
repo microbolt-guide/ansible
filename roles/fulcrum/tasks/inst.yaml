@@ -1,4 +1,4 @@
----  
+---
 - block:
   - name: Configure fulcrum
     ansible.builtin.shell:
@@ -24,9 +24,9 @@
   when: verify_result is not failed
 
   rescue:
-    - ansible.builtin.meta: notify
-      args:
-        handler_name: cleanup
+    - ansible.builtin.shell: /bin/true
+      notify:
+        - cleanup
 
 - block:
   - name: Install Fulcrum binary
@@ -68,9 +68,8 @@
     ansible.builtin.shell:
       cmd: strip /usr/bin/Fulcrum
   when: make_result is not failed
-  always:
-    - ansible.builtin.meta: notify
-      args:
-        handler_name:
-          - cleanup
-          - remove_build_deps
+
+- ansible.builtin.shell: /bin/true
+  notify:
+    - cleanup
+    - remove_build_deps

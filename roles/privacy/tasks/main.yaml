@@ -55,12 +55,5 @@
       CookieAuthFileGroupReadable 1
       DataDirectoryGroupReadable 1
 
-- name: Make i2p tor start on boot
-  ansible.builtin.service:
-    name: "{{ item }}"
-    enabled: true
-    state: started
-  loop: "{{ ['i2pd', 'tor'] }}"
-
 - include_tasks: tor_ssh.yaml
   when: tor_ssh

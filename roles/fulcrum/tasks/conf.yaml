@@ -30,10 +30,4 @@
       src: init.j2
       dest: /etc/init.d/fulcrum
       mode: '0755'
-
-  - name: Start fulcrum
-    ansible.builtin.service:
-      name: fulcrum
-      enabled: true
-      state: started
   when: make_result is not failed

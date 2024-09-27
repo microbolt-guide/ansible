@@ -77,11 +77,5 @@
         src: caddy-init.j2
         dest: /etc/init.d/caddy
         mode: '0755'
-
-    - name: Start caddy
-      ansible.builtin.service:
-        name: caddy
-        enabled: true
-        state: started
     when: extract_result is not failed
   when: caddy_version_result is not failed

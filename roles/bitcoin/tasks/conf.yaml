@@ -30,10 +30,4 @@
       src: init.j2
       dest: /etc/init.d/bitcoind
       mode: '0755'
-
-  - name: Start bitcoind
-    ansible.builtin.service:
-      name: bitcoind
-      enabled: true
-      state: started
   when: install_result is not failed

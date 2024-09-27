@@ -13,12 +13,17 @@ firewall_role: awall # awall or ufw
 reverse_proxy_role: caddy # caddy or nginx
 bitcoin_role: knots # knots or core
 electrum_role: fulcrum # fulcrum or electrs
-explorer_role: btcrpc # btcrpc or mempool
+explorer_role: # btcrpc and/or mempool
+  - btcrpc
+  - mempool
 lightning_role: lnd # lnd or cln (not ready yet)
+nostr_role: true
 
 # Tor options
-ssh_tor: false
-electrum_tor: false
+tor_ssh: false
+tor_electrum: false
+tor_btcrpc: false
+tor_mempool: false
 
 # Bitcoin options
 bitcoin_man: false
@@ -29,6 +34,16 @@ bitcoin_dbcache: 4096
 # Electrum options
 electrum_port_tcp: 50001
 electrum_port_ssl: 50002
+
+# BTC RPC Explorer options
+btcrpc_theme: dark # dark or light
+btcrpc_slow_device_mode: false
+btcrpc_privacy_mode: true
+btcrpc_security_mode: false
+btcrpc_password: passwd # only if security_mode is true
+
+# Mempool options
+mempool_port_ssl: 4081
 
 ################################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING               #
@@ -166,3 +181,63 @@ electrs_config_options:
   - "cookie_file = \"/var/lib/bitcoind/.cookie\""
   - "#db_dir = \"/some/fast/storage/with/big/size\""
   - "daemon_dir = \"/var/lib/bitcoind\""
+
+# BTC RPC Explorer options
+btcrpc_keys_url: https://github.com/janoside.gpg
+btcrpc_build_deps:
+  - git
+  - gnupg
+  - npm
+btcrpc_runtime_deps:
+  - nodejs-current
+btcrpc_config_options:
+  - BTCEXP_BITCOIND_HOST=127.0.0.1
+  - BTCEXP_BITCOIND_PORT=8332
+  - BTCEXP_BITCOIND_COOKIE=/var/lib/bitcoind/.cookie
+  - BTCEXP_ADDRESS_API=electrum
+  - BTCEXP_ELECTRUM_SERVERS=tcp://127.0.0.1:{{ electrum_port_tcp }}
+  - BTCEXP_SLOW_DEVICE_MODE={{ btcrpc_slow_device_mode }}
+  - "{{ btcrpc_slow_device_mode | ternary('BTCEXP_BITCOIND_RPC_TIMEOUT=10000', null) }}"
+  - BTCEXP_UI_THEME={{ btcrpc_theme }}
+  - BTCEXP_PRIVACY_MODE={{ btcrpc_privacy_mode }}
+  - BTCEXP_NO_RATES={{ btcrpc_privacy_mode }}
+  - BTCEXP_DEMO={{ btcrpc_security_mode }}
+  - "{{ btcrpc_security_mode | ternary('BTCEXP_BASIC_AUTH_PASSWORD={{ btcrpc_password }}', null) }}"
+
+# Mempool options
+mempool_keys_url: https://github.com/wiz.gpg
+mempool_build_deps:
+  - cargo
+  - git
+  - gnupg
+  - npm
+  - rsync
+mempool_runtime_deps:
+  - mariadb
+  - mariadb-client
+  - nodejs-current
+mempool_config_options:
+  - key: MEMPOOL.INDEXING_BLOCKS_AMOUNT
+    value: 52560
+  - key: MEMPOOL.STDOUT_LOG_MIN_PRIORITY
+    value: '"info"'
+  - key: CORE_RPC.USERNAME
+    value: '""'
+  - key: CORE_RPC.PASSWORD
+    value: '""'
+  - key: CORE_RPC.COOKIE
+    value: 'true'
+  - key: CORE_RPC.COOKIE_PATH
+    value: '"/var/lib/bitcoind/.cookie"'
+  - key: ESPLORA.REST_API_URL
+    value: '""'
+  - key: ESPLORA.UNIX_SOCKET_PATH
+    value: '""'
+  - key: SECOND_CORE_RPC.HOST
+    value: '""'
+  - key: DATABASE.SOCKET
+    value: '"/var/run/mysqld/mysqld.sock"'
+  - key: DATABASE.PASSWORD
+    value: '""'
+  - key: SOCKS5PROXY.ENABLED
+    value: 'true'

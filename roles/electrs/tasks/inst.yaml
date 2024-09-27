@@ -16,9 +16,9 @@
   when: verify_result is not failed
 
   rescue:
-    - ansible.builtin.meta: notify
-      args:
-        handler_name: cleanup
+    - ansible.builtin.shell: /bin/true
+      notify:
+        - cleanup
 
 - block:
   - name: Install electrs binary
@@ -51,9 +51,8 @@
     ansible.builtin.shell:
       cmd: strip /usr/bin/electrs
   when: compile_result is not failed
-  always:
-    - ansible.builtin.meta: notify
-      args:
-        handler_name:
-          - cleanup
-          - remove_build_deps
+
+- ansible.builtin.shell: /bin/true
+  notify:
+    - cleanup
+    - remove_build_deps

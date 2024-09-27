@@ -30,12 +30,3 @@
     name: [ base-config ssh ]
     state: enabled
     activate: true
-
-- name: Make iptables start on boot and start it
-  ansible.builtin.service:
-    name: "{{ item }}"
-    enabled: true
-    state: started
-  loop:
-    - iptables
-    - ip6tables

@@ -5,12 +5,6 @@
     state: latest
     update_cache: true
 
-- name: Enable qemu-guest-agent
-  ansible.builtin.service:
-    name: qemu-guest-agent
-    enabled: true
-    state: started
-
 - name: Create file /etc/profile.d/defaults.sh
   ansible.builtin.file:
     path: "/etc/profile.d/defaults.sh"
