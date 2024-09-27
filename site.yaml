@@ -1,0 +1,53 @@
+---
+- name: Upgrade all nodes
+  hosts: all
+  gather_facts: true
+  roles:
+    - upgrade
+
+- name: Prepare all nodes
+  hosts: all
+  gather_facts: true
+  roles:
+    - prepare
+
+- name: Install firewall
+  hosts: all
+  gather_facts: true
+  roles:
+    - firewall
+
+- name: Install reverse proxy
+  hosts: all
+  gather_facts: true
+  roles:
+    - reverse_proxy
+
+- name: Install tor and i2p
+  hosts: all
+  gather_facts: true
+  roles:
+    - privacy
+
+- name: Install bitcoin
+  hosts: all
+  gather_facts: true
+  roles:
+    - bitcoin
+
+- name: Install electrum
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Include the electrum role
+      ansible.builtin.include_role:
+        name: "{{ electrum_role }}"
+
+- name: Install explorer(s)
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Include the explorer role
+      ansible.builtin.include_role:
+        name: "{{ item }}"
+      loop: "{{ explorer_role }}"
