@@ -16,9 +16,10 @@
   when: verify_result is not failed
 
   rescue:
-    - ansible.builtin.shell: /bin/true
-      notify:
-        - cleanup
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/electrs"
 
 - block:
   - name: Install electrs binary
@@ -52,7 +53,12 @@
       cmd: strip /usr/bin/electrs
   when: compile_result is not failed
 
-- ansible.builtin.shell: /bin/true
-  notify:
-    - cleanup
-    - remove_build_deps
+- name: Cleanup
+  ansible.builtin.file:
+    state: absent
+    path: "/tmp/electrs"
+
+- name: Remove build deps
+  community.general.apk:
+    name: "{{ electrs_build_deps | join(',') }}"
+    state: absent

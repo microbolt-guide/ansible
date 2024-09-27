@@ -24,9 +24,10 @@
   when: verify_result is not failed
 
   rescue:
-    - ansible.builtin.shell: /bin/true
-      notify:
-        - cleanup
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/Fulcrum"
 
 - block:
   - name: Install Fulcrum binary
@@ -69,7 +70,12 @@
       cmd: strip /usr/bin/Fulcrum
   when: make_result is not failed
 
-- ansible.builtin.shell: /bin/true
-  notify:
-    - cleanup
-    - remove_build_deps
+- name: Cleanup
+  ansible.builtin.file:
+    state: absent
+    path: "/tmp/Fulcrum"
+
+- name: Remove build deps
+  community.general.apk:
+    name: "{{ fulcrum_build_deps | join(',') }}"
+    state: absent

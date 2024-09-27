@@ -65,7 +65,7 @@
 
     - name: Import PGP keys from GitHub repository
       ansible.builtin.shell:
-        cmd: wget -qO- "{{ btc-rpc-explorer_keys_url }}" | gpg --import
+        cmd: wget -qO- "{{ btcrpc_keys_url }}" | gpg --import
       register: import_keys_result
 
     - name: Debug import_keys_result
@@ -86,7 +86,8 @@
     become_user: "{{ ansible_user }}"
 
   rescue:
-    - ansible.builtin.shell: /bin/true
-      notify:
-        - cleanup
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: /tmp/btc-rpc-explorer
   when: btcrpcexplorer_version_result is not failed

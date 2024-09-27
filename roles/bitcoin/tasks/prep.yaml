@@ -102,7 +102,13 @@
     become_user: "{{ ansible_user }}"
 
   rescue:
-    - ansible.builtin.shell: /bin/true
-      notify:
-        - cleanup
+    - name: Cleanup
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+      - "/tmp/bitcoin-{{ bitcoin_version }}.tar.gz"
+      - "/tmp/bitcoin-{{ bitcoin_version }}"
+      - "/tmp/SHA256SUMS.asc"
+      - "/tmp/SHA256SUMS"
   when: bitcoin_version_result is not failed

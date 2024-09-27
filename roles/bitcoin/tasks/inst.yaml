@@ -41,9 +41,15 @@
   when: verify_result is not failed
 
   rescue:
-    - ansible.builtin.shell: /bin/true
-      notify:
-        - cleanup
+    - name: Cleanup
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+      - "/tmp/bitcoin-{{ bitcoin_version }}.tar.gz"
+      - "/tmp/bitcoin-{{ bitcoin_version }}"
+      - "/tmp/SHA256SUMS.asc"
+      - "/tmp/SHA256SUMS"
 
 - name: Install bitcoin
   ansible.builtin.shell:
@@ -62,7 +68,18 @@
   register: install_result
   when: make_result is not failed
 
-- ansible.builtin.shell: /bin/true
-  notify:
-    - cleanup
-    - remove_build_deps
+- name: Cleanup
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+  - "/tmp/bitcoin-{{ bitcoin_version }}.tar.gz"
+  - "/tmp/bitcoin-{{ bitcoin_version }}"
+  - "/tmp/SHA256SUMS.asc"
+  - "/tmp/SHA256SUMS"
+
+- name: Remove build deps
+  community.general.apk:
+    name: "{{ bitcoin_build_deps | join(',') }}"
+    state: absent
+  ignore_errors: true

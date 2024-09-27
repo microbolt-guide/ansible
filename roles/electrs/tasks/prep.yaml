@@ -86,7 +86,8 @@
     become_user: "{{ ansible_user }}"
 
   rescue:
-    - ansible.builtin.shell: /bin/true
-      notify:
-        - cleanup
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/electrs"
   when: electrs_version_result is not failed
