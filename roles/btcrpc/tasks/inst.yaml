@@ -8,17 +8,13 @@
     args:
       chdir: /tmp/btc-rpc-explorer
     register: patch_result
-
-  - name: Install dependencies
-    community.general.npm:
-      ci: true
-      path: /tmp/btc-rpc-explorer
   
-  - name: Install zeromq dependency
+  - name: Install dependencies and zeromq@latest
     community.general.npm:
       name: zeromq
-      state: latest
+      version: latest
       path: /tmp/btc-rpc-explorer
+    when: patch_result is not failed
     register: install_result
 
   become_user: "{{ ansible_user }}"
@@ -51,7 +47,7 @@
   - name: Install btc-rpc-explorer lib
     ansible.builtin.copy:
       src: /tmp/btc-rpc-explorer
-      dest: /var/lib/btc-rpc-explorer
+      dest: /var/lib
       owner: root
       group: root
       mode: '0755'

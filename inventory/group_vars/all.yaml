@@ -196,13 +196,13 @@ btcrpc_config_options:
   - BTCEXP_BITCOIND_COOKIE=/var/lib/bitcoind/.cookie
   - BTCEXP_ADDRESS_API=electrum
   - BTCEXP_ELECTRUM_SERVERS=tcp://127.0.0.1:{{ electrum_port_tcp }}
-  - BTCEXP_SLOW_DEVICE_MODE={{ btcrpc_slow_device_mode }}
-  - "{{ btcrpc_slow_device_mode | ternary('BTCEXP_BITCOIND_RPC_TIMEOUT=10000', null) }}"
+  - BTCEXP_SLOW_DEVICE_MODE={{ btcrpc_slow_device_mode | lower }}
+  - "{% if btcrpc_slow_device_mode %}BTCEXP_BITCOIND_RPC_TIMEOUT=10000{% endif %}"
   - BTCEXP_UI_THEME={{ btcrpc_theme }}
-  - BTCEXP_PRIVACY_MODE={{ btcrpc_privacy_mode }}
-  - BTCEXP_NO_RATES={{ btcrpc_privacy_mode }}
-  - BTCEXP_DEMO={{ btcrpc_security_mode }}
-  - "{{ btcrpc_security_mode | ternary('BTCEXP_BASIC_AUTH_PASSWORD={{ btcrpc_password }}', null) }}"
+  - BTCEXP_PRIVACY_MODE={{ btcrpc_privacy_mode | lower}}
+  - BTCEXP_NO_RATES={{ btcrpc_privacy_mode | lower }}
+  - BTCEXP_DEMO={{ btcrpc_security_mode | lower }}
+  - "{% if btcrpc_security_mode %}BTCEXP_BASIC_AUTH_PASSWORD={{ btcrpc_password }}{% endif %}"
 
 # Mempool options
 mempool_keys_url: https://github.com/wiz.gpg
@@ -211,6 +211,7 @@ mempool_build_deps:
   - git
   - gnupg
   - npm
+  - py3-mysqlclient
   - rsync
 mempool_runtime_deps:
   - mariadb
