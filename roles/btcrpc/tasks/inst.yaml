@@ -25,9 +25,9 @@
   when: verify_result is not failed
 
   rescue:
-    - ansible.builtin.meta: notify
-      args:
-        handler_name: cleanup
+    - ansible.builtin.shell: /bin/true
+      notify:
+        - cleanup
 
 - block:
   - name: Ensure /etc/btc-rpc-explorer directory exists
@@ -69,9 +69,8 @@
       state: link
 
   when: install_result is not failed
-  always:
-    - ansible.builtin.meta: notify
-      args:
-        handler_name:
-          - cleanup
-          - remove_build_deps
+
+- ansible.builtin.shell: /bin/true
+  notify:
+    - cleanup
+    - remove_build_deps

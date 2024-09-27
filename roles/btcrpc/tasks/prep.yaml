@@ -84,9 +84,9 @@
       ansible.builtin.debug:
         var: verify_result.stderr_lines
     become_user: "{{ ansible_user }}"
-  
+
   rescue:
-    - ansible.builtin.meta: notify
-      args:
-        handler_name: cleanup
+    - ansible.builtin.shell: /bin/true
+      notify:
+        - cleanup
   when: btc-rpc-explorer_version_result is not failed

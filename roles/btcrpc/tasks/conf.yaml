@@ -22,10 +22,4 @@
       src: init.j2
       dest: /etc/init.d/btc-rpc-explorer
       mode: '0755'
-  
-  - name: Start electrs
-    ansible.builtin.service:
-      name: btc-rpc-explorer
-      enabled: true
-      state: started
   when: make_result is not failed
