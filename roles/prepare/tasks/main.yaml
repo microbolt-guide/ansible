@@ -1,7 +1,7 @@
 ---
 - name: Install global dependencies
   community.general.apk:
-    name: openssl,qemu-guest-agent
+    name: avahi,openssl,qemu-guest-agent
     state: latest
     update_cache: true
 

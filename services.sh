@@ -1,6 +1,7 @@
 #!/bin/sh -e
 
 all="\
+avahi-daemon,\
 qemu-guest-agent,\
 i2pd,\
 tor,\
@@ -29,6 +30,8 @@ Actions:
 
 Services:
   all                           Manage all services (default)
+	avahi-daemon                  Manage the avahi-daemon service
+		avahi
   qemu-guest-agent              Manage the qemu-guest-agent service
     qemu
     qm
@@ -103,6 +106,9 @@ IFS=,; for service in $in_services; do
         all|""|" ")
             services="$all"; break
         ;;
+				avahi-daemon|avahi)
+						services="${services}avahi-daemon,"
+				;;
         qemu-guest-agent|qemu|qm|qmga)
             services="${services}qemu-guest-agent,"
         ;;
