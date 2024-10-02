@@ -3,9 +3,11 @@
   - name: Configure fulcrum
     ansible.builtin.shell:
       cmd: |
+        ash -lc '\
         qmake6 \
           Fulcrum.pro \
           -o build/
+        '
     args:
       chdir: /tmp/Fulcrum
     register: configure_result
@@ -13,9 +15,11 @@
   - name: Compile fulcrum
     ansible.builtin.shell:
       cmd: |
+        ash -lc '\
         CC=gcc \
         CXX=g++ \
         make -C build
+        '
     args:
       chdir: /tmp/Fulcrum
     register: make_result

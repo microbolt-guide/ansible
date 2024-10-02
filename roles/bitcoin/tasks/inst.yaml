@@ -3,6 +3,7 @@
   - name: Configure bitcoin
     ansible.builtin.shell:
       cmd: |
+        ash -lc '\
         ./autogen.sh
         ./configure \
             --prefix=/usr \
@@ -26,13 +27,14 @@
             --disable-shared \
             --disable-tests \
             --disable-wallet
+        '
     args:
       chdir: /tmp/bitcoin-{{ bitcoin_version }}
     register: configure_result
 
   - name: Compile bitcoin
     ansible.builtin.shell:
-      cmd: make
+      cmd: ash -lc 'make'
     args:
       chdir: /tmp/bitcoin-{{ bitcoin_version }}
     register: make_result
