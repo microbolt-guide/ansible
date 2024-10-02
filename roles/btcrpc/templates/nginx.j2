@@ -1,8 +1,8 @@
 upstream btc-rpc-explorer {
     server 127.0.0.1:3002;
 }
- 
+
 server {
-    listen 4000 ssl;
+    listen {{ btcrpc_port_ssl }} ssl;
     proxy_pass btc-rpc-explorer;
 }

@@ -12,8 +12,3 @@
     src: /etc/nginx/streams-available/btc-rpc-explorer-reverse-proxy.conf
     dest: /etc/nginx/streams-enabled/btc-rpc-explorer-reverse-proxy.conf
     state: link
-
-- name: Restart nginx service
-  ansible.builtin.service:
-    name: nginx
-    state: restarted

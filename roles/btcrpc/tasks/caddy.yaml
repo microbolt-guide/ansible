@@ -6,8 +6,3 @@
     owner: root
     group: root
     mode: '0644'
-
-- name: Restart Caddy service
-  ansible.builtin.service:
-    name: caddy
-    state: reloaded

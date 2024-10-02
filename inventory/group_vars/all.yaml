@@ -36,6 +36,7 @@ electrum_port_tcp: 50001
 electrum_port_ssl: 50002
 
 # BTC RPC Explorer options
+btcrpc_port_ssl: 4000
 btcrpc_theme: dark # dark or light
 btcrpc_slow_device_mode: false
 btcrpc_privacy_mode: true
@@ -119,6 +120,8 @@ bitcoin_runtime_deps:
   - libsodium
   - libstdc++
   - libzmq
+  - "{% if bitcoin_man %}man-pages{% endif %}"
+  - "{% if bitcoin_man %}mandoc{% endif %}"
 bitcoin_config_options:
   - assumevalid=0
   - blockfilterindex=1
@@ -218,6 +221,7 @@ mempool_runtime_deps:
   - mariadb
   - mariadb-client
   - nodejs-current
+  - redis
 mempool_config_options:
   - key: MEMPOOL.INDEXING_BLOCKS_AMOUNT
     value: 52560
@@ -243,3 +247,9 @@ mempool_config_options:
     value: '""'
   - key: SOCKS5PROXY.ENABLED
     value: 'true'
+  - key: MEMPOOL.CACHE_ENABLED
+    value: 'false'
+  - key: REDIS.ENABLED
+    value: 'true'
+  - key: REDIS.UNIX_SOCKET_PATH
+    value: '/var/run/redis/redis.sock'

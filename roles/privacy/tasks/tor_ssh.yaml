@@ -10,11 +10,6 @@
       HiddenServicePoWDefensesEnabled 1
       HiddenServicePort 22 127.0.0.1:22
 
-- name: Reload Tor service to apply configuration
-  ansible.builtin.service:
-    name: tor
-    state: reloaded
-
 - name: Get the SSH Onion address
   ansible.builtin.command:
     cmd: cat /var/lib/tor/ssh/hostname

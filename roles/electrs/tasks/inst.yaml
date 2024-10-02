@@ -55,12 +55,13 @@
       cmd: strip /usr/bin/electrs
   when: compile_result is not failed
 
-- name: Cleanup
-  ansible.builtin.file:
-    state: absent
-    path: "/tmp/electrs"
+  always:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/electrs"
 
-- name: Remove build deps
-  community.general.apk:
-    name: "{{ electrs_build_deps | join(',') }}"
-    state: absent
+    - name: Remove build deps
+      community.general.apk:
+        name: "{{ electrs_build_deps | join(',') }}"
+        state: absent

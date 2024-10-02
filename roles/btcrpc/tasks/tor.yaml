@@ -8,12 +8,7 @@
       HiddenServiceDir /var/lib/tor/btc-rpc-explorer/
       HiddenServiceVersion 3
       HiddenServicePoWDefensesEnabled 1
-      HiddenServicePort 443 127.0.0.1:4000
-
-- name: Reload Tor service to apply configuration
-  ansible.builtin.service:
-    name: tor
-    state: reloaded
+      HiddenServicePort 443 127.0.0.1:{{ btcrpc_port_ssl }}
 
 - name: Get the btc-rpc-explorer Onion address
   ansible.builtin.command:

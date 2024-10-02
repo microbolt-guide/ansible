@@ -12,8 +12,3 @@
     src: /etc/nginx/streams-available/electrum-reverse-proxy.conf
     dest: /etc/nginx/streams-enabled/electrum-reverse-proxy.conf
     state: link
-
-- name: Restart nginx service
-  ansible.builtin.service:
-    name: nginx
-    state: restarted

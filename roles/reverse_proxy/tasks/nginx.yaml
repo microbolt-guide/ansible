@@ -61,3 +61,8 @@
     - /etc/nginx/streams-enabled
   loop_control:
     label: "{{ item }}"
+
+- name: Uninstall deps
+  community.general.apk:
+    name: py3-cryptography
+    state: absent

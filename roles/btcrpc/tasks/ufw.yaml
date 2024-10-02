@@ -2,6 +2,6 @@
 - name: Allow BTC RPC Explorer
   community.general.ufw:
     rule: limit
-    port: 4000
+    port: "{{ btcrpc_port_ssl }}"
     proto: tcp
     comment: "Allow BTC RPC Explorer SSL"

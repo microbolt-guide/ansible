@@ -10,11 +10,6 @@
       HiddenServicePoWDefensesEnabled 1
       HiddenServicePort {{ electrum_port_ssl }} 127.0.0.1:{{ electrum_port_ssl }}
 
-- name: Reload Tor service to apply configuration
-  ansible.builtin.service:
-    name: tor
-    state: reloaded
-
 - name: Get the Electrum Onion address
   ansible.builtin.command:
     cmd: cat /var/lib/tor/electrum/hostname

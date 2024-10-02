@@ -1,7 +1,7 @@
 upstream electrum {
   server 127.0.0.1:{{ electrum_port_tcp }};
 }
- 
+
 server {
   listen {{ electrum_port_ssl }} ssl;
   proxy_pass electrum;

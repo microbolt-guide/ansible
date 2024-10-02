@@ -67,12 +67,13 @@
 
   when: install_result is not failed
 
-- name: Cleanup
-  ansible.builtin.file:
-    state: absent
-    path: /tmp/btc-rpc-explorer
+  always:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: /tmp/btc-rpc-explorer
 
-- name: Remove build deps
-  community.general.apk:
-    name: "{{ btcrpc_build_deps | join(',') }}"
-    state: absent
+    - name: Remove build deps
+      community.general.apk:
+        name: "{{ btcrpc_build_deps | join(',') }}"
+        state: absent

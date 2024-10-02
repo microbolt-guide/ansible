@@ -9,6 +9,9 @@ tor,\
 {{ reverse_proxy_role }},\
 bitcoind,\
 electrum,\
+btc-rpc-explorer,\
+mempool,\
+public-pool,\
 {{ lightning_role }},\
 nostr-rs-relay,\
 umbrel-nostr-relay,\
@@ -30,35 +33,34 @@ Actions:
 
 Services:
   all                           Manage all services (default)
-	avahi-daemon                  Manage the avahi-daemon service
-		avahi
+  avahi-daemon, avahi           Manage the avahi-daemon service
   qemu-guest-agent              Manage the qemu-guest-agent service
-    qemu
-    qm
-    qmga
+    qemu, qm, qmga
   i2p, i2pd                     Manage the i2pd service
   tor                           Manage the tor service
   firewall, awall, ufw          Manage the firewall service (awall, ufw)
   reverse-proxy                 Manage the reverse proxy service (caddy, nginx)
-    caddy
-    nginx
+    caddy, nginx
   bitcoin                       Manage the bitcoind service
-    bitcoind
-    knots
-    core
+    bitcoind, knots, core
   electrum                      Manage the electrum service
-    fulcrum
-    electrs
+    fulcrum, electrs
+  btc-rpc-explorer              Manage the btc-rpc-explorer service
+    btc-rpc-expl, btc-rpc,
+    btcrpcexplorer, btcrpcexpl,
+    btcexplorer, btcexpl
+  mempool                       Manage the mempool service
+    mempool.space
+  public-pool                   Manage the public-pool service
+    publicpool, pool
   lightning, lnd                Manage the lightning service
   nostr-relay                   Manage the nostr-rs-relay service
     nostr-rs-relay
     nostr-relay-only
   nostr                         Manage the umbrel-nostr-relay service
-    nostr-webapp
-    nostr-webgui
-    nostr-webui
-    nostr-umbrel
-    umbrel-nostr                                
+    nostr-webapp, nostr-webgui,
+    nostr-webui, nostr-umbrel,
+    umbrel-nostr
 
 Examples:
   ${0##*/} start enable
@@ -106,9 +108,9 @@ IFS=,; for service in $in_services; do
         all|""|" ")
             services="$all"; break
         ;;
-				avahi-daemon|avahi)
-						services="${services}avahi-daemon,"
-				;;
+        avahi-daemon|avahi)
+            services="${services}avahi-daemon,"
+        ;;
         qemu-guest-agent|qemu|qm|qmga)
             services="${services}qemu-guest-agent,"
         ;;
@@ -129,6 +131,15 @@ IFS=,; for service in $in_services; do
         ;;
         electrum|fulcrum|electrs)
             services="${services}electrum,"
+        ;;
+        btc-rpc-explorer|btc-rpc-expl|btc-rpc|btcrpcexplorer|btcrpcexpl|btcexplorer|btcexpl)
+            services="${services}btc-rpc-explorer,"
+        ;;
+        mempool|mempool.space)
+            services="${services}mempool,"
+        ;;
+        public-pool|publicpool|pool)
+            services="${services}public-pool,"
         ;;
         lightning|lnd)
             services="${services}{{ lightning_role }},"
