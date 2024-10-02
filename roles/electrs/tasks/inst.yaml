@@ -3,12 +3,14 @@
   - name: Compile electrs
     ansible.builtin.shell:
       cmd: |
+        ash -lc '\
         cargo auditable build \
             --bin electrs \
             --features "metrics_process" \
             --release \
             --locked \
             --jobs "$(nproc)"
+        '
     args:
       chdir: /tmp/electrs
     register: compile_result

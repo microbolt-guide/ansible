@@ -22,4 +22,4 @@
       src: init.j2
       dest: /etc/init.d/electrs
       mode: '0755'
-  when: make_result is not failed
+  when: compile_result is not failed

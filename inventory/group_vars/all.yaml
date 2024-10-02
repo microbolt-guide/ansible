@@ -180,6 +180,7 @@ electrs_runtime_deps:
 electrs_config_options:
   - "cookie_file = \"/var/lib/bitcoind/.cookie\""
   - "#db_dir = \"/some/fast/storage/with/big/size\""
+  - "electrum_rpc_addr = \"127.0.0.1:{{ electrum_port_tcp }}\""
   - "daemon_dir = \"/var/lib/bitcoind\""
 
 # BTC RPC Explorer options
