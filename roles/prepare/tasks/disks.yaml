@@ -48,6 +48,11 @@
     src: "{{ second_disk_dev }}1"
     state: present
 
+- name: Remove dependencies
+  community.general.apk:
+    name: rsync
+    state: absent
+
 - name: Reboot
   ansible.builtin.reboot:
     reboot_timeout: 300
