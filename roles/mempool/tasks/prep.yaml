@@ -1,0 +1,107 @@
+---
+- name: Get version number of latest mempool release
+  ansible.builtin.shell:
+    cmd: wget -qO- 'https://api.github.com/repos/mempool/mempool/releases/latest' | grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
+  register: mempool_version_result
+
+- block:
+  - name: Set mempool_version fact
+    set_fact:
+      mempool_version: "{{ mempool_version_result.stdout }}"
+
+  - name: Create mempool system group
+    ansible.builtin.group:
+      system: true
+      name: mempool
+      state: present
+
+  - name: Create mempool system user
+    ansible.builtin.user:
+      system: true
+      password: "!"
+      create_home: false
+      home: /dev/null
+      shell: /sbin/nologin
+      group: mempool
+      comment: "mempool"
+      name: mempool
+      state: present
+
+  - name: Add user mempool to bitcoin group
+    ansible.builtin.user:
+      name: mempool
+      groups: bitcoin
+      append: true
+      state: present
+
+  - name: Add user {{ ansible_user }} to mempool group
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups: mempool
+      append: true
+      state: present
+
+  - name: Add user mempool to tor group
+    ansible.builtin.user:
+      name: mempool
+      groups: tor
+      append: true
+      state: present
+
+  - name: Add user mempool to redis group
+    ansible.builtin.user:
+      name: mempool
+      groups: redis
+      append: true
+      state: present
+
+  # Firewall
+  - include_tasks: awall.yaml
+    when: firewall_role == 'awall'
+
+  - include_tasks: ufw.yaml
+    when: firewall_role == 'ufw'
+
+  # Reverse Proxy
+  - include_tasks: caddy.yaml
+    when: reverse_proxy_role == 'caddy'
+
+  - include_tasks: nginx.yaml
+    when: reverse_proxy_role == 'nginx'
+
+  - block:
+    - name: Download mempool repository
+      ansible.builtin.shell:
+        cmd: git clone --branch v{{ mempool_version }} https://github.com/mempool/mempool.git
+      args:
+        chdir: /tmp
+      register: import_keys_result
+
+    - name: Import PGP keys from GitHub repository
+      ansible.builtin.shell:
+        cmd: wget -qO- "{{ mempool_keys_url }}" | gpg --import
+      register: import_keys_result
+
+    - name: Debug import_keys_result
+      ansible.builtin.debug:
+        var: import_keys_result.stderr_lines
+
+    - name: Verify mempool tag
+      ansible.builtin.shell:
+        cmd: git verify-tag v{{ mempool_version }}
+      args:
+        chdir: /tmp/mempool
+      register: verify_result
+      failed_when: "'Good signature' not in verify_result.stderr"
+
+    - name: Debug verify_result
+      ansible.builtin.debug:
+        var: verify_result.stderr_lines
+    become_user: "{{ ansible_user }}"
+
+  rescue:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/mempool"
+  when: mempool_version_result is not failed

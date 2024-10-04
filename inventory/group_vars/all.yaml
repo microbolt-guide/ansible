@@ -16,14 +16,16 @@ electrum_role: fulcrum # fulcrum or electrs
 explorer_role: # btcrpc and/or mempool
   - btcrpc
   - mempool
+pool_role: true # public_pool
 lightning_role: lnd # lnd or cln (not ready yet)
-nostr_role: true
+nostr_role: true # nostr-rs-relay + umbrel-nostr-relay
 
 # Tor options
 tor_ssh: false
 tor_electrum: false
 tor_btcrpc: false
 tor_mempool: false
+tor_public_pool: false
 
 # Bitcoin options
 bitcoin_man: false
@@ -36,6 +38,7 @@ electrum_port_tcp: 50001
 electrum_port_ssl: 50002
 
 # BTC RPC Explorer options
+btcrpc_port_tcp: 3002
 btcrpc_port_ssl: 4000
 btcrpc_theme: dark # dark or light
 btcrpc_slow_device_mode: false
@@ -44,7 +47,16 @@ btcrpc_security_mode: false
 btcrpc_password: passwd # only if security_mode is true
 
 # Mempool options
+mempool_port_tcp: 8999
 mempool_port_ssl: 4081
+mempool_redis: true
+
+# Public Pool options
+
+# Lightning options
+lnd_slow_device_mode: false
+
+# Nostr options
 
 ################################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING               #
@@ -195,6 +207,7 @@ btcrpc_build_deps:
 btcrpc_runtime_deps:
   - nodejs-current
 btcrpc_config_options:
+  - BTCEXP_PORT={{ btcrpc_port_tcp }}
   - BTCEXP_BITCOIND_HOST=127.0.0.1
   - BTCEXP_BITCOIND_PORT=8332
   - BTCEXP_BITCOIND_COOKIE=/var/lib/bitcoind/.cookie
@@ -221,35 +234,58 @@ mempool_runtime_deps:
   - mariadb
   - mariadb-client
   - nodejs-current
-  - redis
+  - "{% if mempool_redis %}redis{% endif %}"
 mempool_config_options:
-  - key: MEMPOOL.INDEXING_BLOCKS_AMOUNT
-    value: 52560
-  - key: MEMPOOL.STDOUT_LOG_MIN_PRIORITY
-    value: '"info"'
-  - key: CORE_RPC.USERNAME
-    value: '""'
-  - key: CORE_RPC.PASSWORD
-    value: '""'
-  - key: CORE_RPC.COOKIE
-    value: 'true'
-  - key: CORE_RPC.COOKIE_PATH
-    value: '"/var/lib/bitcoind/.cookie"'
-  - key: ESPLORA.REST_API_URL
-    value: '""'
-  - key: ESPLORA.UNIX_SOCKET_PATH
-    value: '""'
-  - key: SECOND_CORE_RPC.HOST
-    value: '""'
-  - key: DATABASE.SOCKET
-    value: '"/var/run/mysqld/mysqld.sock"'
-  - key: DATABASE.PASSWORD
-    value: '""'
-  - key: SOCKS5PROXY.ENABLED
-    value: 'true'
-  - key: MEMPOOL.CACHE_ENABLED
-    value: 'false'
-  - key: REDIS.ENABLED
-    value: 'true'
-  - key: REDIS.UNIX_SOCKET_PATH
-    value: '/var/run/redis/redis.sock'
+  MEMPOOL:
+    HTTP_PORT: '{{ mempool_port_tcp }}'
+    CACHE_ENABLED: false
+    INDEXING_BLOCKS_AMOUNT: 52560
+    STDOUT_LOG_MIN_PRIORITY: 'info'
+  CORE_RPC:
+    USERNAME: ''
+    PASSWORD: ''
+    COOKIE: true
+    COOKIE_PATH: '/var/lib/bitcoind/.cookie'
+  ESPLORA:
+    REST_API_URL: ''
+    UNIX_SOCKET_PATH: ''
+  SECOND_CORE_RPC:
+    HOST: ''
+  DATABASE:
+    SOCKET: '/var/run/mysqld/mysqld.sock'
+    PASSWORD: ''
+  SOCKS5PROXY:
+    ENABLED: true
+  REDIS:
+    ENABLED: "{{ mempool_redis | ternary(true, false) }}"
+    UNIX_SOCKET_PATH: '/var/run/redis/redis.sock'
+
+# Public Pool options
+public_pool_keys_url:
+public_pool_build_deps:
+  - git
+  - npm
+public_pool_runtime_deps:
+  - nodejs-current
+public_pool_config_options:
+
+# Lightning options
+lnd_keys_url: https://raw.githubusercontent.com/lightningnetwork/lnd/master/scripts/keys/roasbeef.asc
+lnd_build_deps:
+  - git
+  - go
+  - gnupg
+  - make
+
+# Nostr options
+nostr_keys_url:
+nostr_build_deps:
+  - git
+  - go
+  - gnupg
+  - make
+nostr_runtime_deps:
+  - nodejs-current
+nostr_config_options:
+  - NOSTR_RPC_PORT=8080
+  - NOSTR_RPC_HOST=

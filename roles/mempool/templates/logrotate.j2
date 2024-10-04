@@ -1,0 +1,13 @@
+/var/log/mempool/*.log {
+    weekly
+    missingok
+    rotate 104
+    compress
+    delaycompress
+    notifempty
+    create 0640 mempool mempool
+    sharedscripts
+    postrotate
+        killall -HUP `cat /run/mempool/mempool.pid`
+    endscript
+}

@@ -1,0 +1,38 @@
+---
+- block:
+  - name: Read mempool configuration
+    ansible.builtin.shell:
+      cmd: cat /etc/mempool/mempool-config.json
+    register: mempool_config
+
+  - name: Set default values
+    ansible.builtin.set_fact:
+      mempool_config: "{{ mempool_config.stdout | from_json }}"
+
+  - name: Update mempool configuration
+    ansible.builtin.set_fact:
+      mempool_config: "{{ mempool_config | combine({ item.key: item.value }, recursive=true) }}"
+    loop: "{{ mempool_config_options | dict2items }}"
+    vars:
+      item: "{{ item.value | dict2items }}"
+
+  - name: Write mempool configuration
+    ansible.builtin.copy:
+      content: "{{ mempool_config | to_nice_json }}"
+      dest: /etc/mempool/mempool-config.json
+
+  - include_tasks: tor.yaml
+    when: tor_mempool
+
+  - name: Mempool logrotate script
+    ansible.builtin.template:
+      src: logrotate.j2
+      dest: /etc/logrotate.d/mempool
+      mode: '0644'
+  
+  - name: Mempool init script
+    ansible.builtin.template:
+      src: init.j2
+      dest: /etc/init.d/mempool
+      mode: '0755'
+  when: build_result is not failed

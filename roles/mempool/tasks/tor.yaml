@@ -1,0 +1,25 @@
+---
+- name: Add Hidden Service Mempool server configuration
+  ansible.builtin.blockinfile:
+    path: /etc/tor/torrc
+    insertafter: '## This section is just for location-hidden services ##'
+    block: |
+      # Hidden Service Mempool Space
+      HiddenServiceDir /var/lib/tor/mempool/
+      HiddenServiceVersion 3
+      HiddenServicePoWDefensesEnabled 1
+      HiddenServicePort 443 127.0.0.1:{{ mempool_port_ssl }}
+
+- name: Reload Tor service to apply configuration
+  ansible.builtin.service:
+    name: tor
+    state: reloaded
+
+- name: Get the mempool Onion address
+  ansible.builtin.command:
+    cmd: cat /var/lib/tor/mempool/hostname
+  register: mempool_onion_address
+
+- name: Display mempool Onion address
+  ansible.builtin.debug:
+    msg: "Mempool Onion address: {{ mempool_onion_address.stdout }}"

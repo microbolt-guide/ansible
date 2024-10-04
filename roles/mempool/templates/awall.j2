@@ -1,0 +1,13 @@
+{
+  "description": "Allow Mempool Space SSL",
+ 
+  "filter": [
+    {
+      "in": "internet",
+      "out": "_fw",
+      "service": { "proto": "tcp", "port": {{ mempool_port_ssl }} },
+      "action": "accept",
+      "conn-limit": { "count": 10, "interval": 60 }
+    }
+  ]
+}

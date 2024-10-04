@@ -1,0 +1,142 @@
+---
+- name: mariadb
+  block:
+  - name: Setup mariadb
+    ansible.builtin.shell:
+      cmd: rc-service mariadb setup
+  - name: Start mariadb
+    ansible.builtin.service:
+      name: mariadb
+      enabled: false
+      state: started
+  - name: Create mempool database
+    community.mysql.mysql_db:
+      name: mempool
+      state: present
+      login_unix_socket: /var/run/mysqld/mysqld.sock
+  - name: Create mempool mariadb user
+    community.mysql.mysql_user:
+      priv: "mempool.*:ALL"
+      name: mempool
+      login_host: localhost
+      plugin: unix_socket
+      login_unix_socket: /var/run/mysqld/mysqld.sock
+  - name: Stop mariadb
+    ansible.builtin.service:
+      name: mariadb
+      enabled: false
+      state: stopped
+  when: verify_result is not failed
+
+  rescue:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/mempool"
+
+- name: backend
+  block:
+    - name: Install backend dependencies
+      community.general.npm:
+        ci: true
+        production: true
+        path: /tmp/mempool/backend
+
+    - name: Package backend
+      ansible.builtin.shell:
+        cmd: npm run package
+        chdir: /tmp/mempool/backend
+
+    - name: Install backend globally
+      block:
+        - name: Create directories
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: directory
+            owner: mempool
+            group: mempool
+            mode: '0755'
+          loop:
+            - /tmp/mempool/backend/package/bin
+            - /etc/mempool
+          loop_control:
+            label: "{{ item }}"
+        - name: Create cli.sh
+          ansible.builtin.blockinfile:
+            path: /tmp/mempool/backend/package/bin/cli.sh
+            create: true
+            mode: a+x
+            block: |
+              #!/bin/sh
+              node /var/lib/mempool/index.js
+        - name: Copy files
+          ansible.builtin.copy:
+            src: /tmp/mempool/backend/mempool-config.sample.json
+            dest: /etc/mempool/mempool-config.json
+            owner: mempool
+            group: mempool
+            mode: '0660'
+            remote_src: yes
+        - ansible.builtin.copy:
+            src: /tmp/mempool/backend/package
+            dest: /var/lib/mempool
+            owner: root
+            group: root
+            mode: '0755'
+            remote_src: yes
+        - name: Link files
+          ansible.builtin.file:
+            src: /var/lib/mempool
+            path: /usr/lib/node_modules/mempool
+            state: link
+        - ansible.builtin.file:
+            src: ../lib/node_modules/mempool/bin/cli.sh
+            path: /usr/bin/mempool
+            state: link
+            force: true
+            follow: false
+  when: verify_result is not failed
+
+  rescue:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/mempool"
+
+- name: frontend
+  block:
+    - name: Install frontend dependencies
+      community.general.npm:
+        ci: true
+        production: true
+        path: /tmp/mempool/frontend
+
+    - name: Build frontend
+      ansible.builtin.shell:
+        cmd: npm run build
+        chdir: /tmp/mempool/frontend
+      register: build_result
+      retries: 5
+      delay: 30
+      until: build_result.rc == 0
+    
+    - name: Install frontend globally
+      ansible.builtin.copy:
+        src: /tmp/mempool/frontend/dist/mempool
+        dest: /var/www
+        owner: root
+        group: root
+        mode: '0755'
+        remote_src: yes
+  when: verify_result is not failed
+
+  always:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/mempool"
+
+    - name: Remove build deps
+      community.general.apk:
+        name: "{{ mempool_build_deps | join(',') }}"
+        state: absent

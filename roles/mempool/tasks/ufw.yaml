@@ -1,0 +1,7 @@
+---
+- name: Allow Mempool
+  community.general.ufw:
+    rule: limit
+    port: "{{ mempool_port_ssl }}"
+    proto: tcp
+    comment: "Allow Mempool Space SSL"

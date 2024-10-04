@@ -1,0 +1,72 @@
+#!/sbin/openrc-run
+
+: ${MEMPOOL_CONFIGFILE:=/etc/mempool/mempool-config.json}
+: ${MEMPOOL_DATADIR:=/var/lib/mempool}
+: ${MEMPOOL_LOGDIR:=/var/log/mempool}
+: ${MEMPOOL_USER:=mempool}
+: ${MEMPOOL_GROUP:=mempool}
+: ${MEMPOOL_BIN:=/usr/bin/mempool}
+: ${MEMPOOL_OPTS=${MEMPOOL_OPTS}}
+: ${MEMPOOL_SIGTERM_TIMEOUT:=600}
+
+MEMPOOL_PIDDIR="/run/mempool"
+
+name="Mempool Space"
+description="A self-hosted Bitcoin blockchain and mempool visualizer/explorer"
+
+directory="${MEMPOOL_DATADIR}"
+required_files="${MEMPOOL_CONFIGFILE}"
+pidfile="${MEMPOOL_PIDDIR}/${SVCNAME}.pid"
+retry="${MEMPOOL_SIGTERM_TIMEOUT}"
+
+command="${MEMPOOL_BIN}"
+command_args="${MEMPOOL_OPTS}"
+command_user="${MEMPOOL_USER}:${MEMPOOL_GROUP}"
+command_background="true"
+
+start_stop_daemon_args="--env MEMPOOL_CONFIG_FILE=${MEMPOOL_CONFIGFILE}
+                        --stdout ${MEMPOOL_LOGDIR}/debug.log
+                        --stderr ${MEMPOOL_LOGDIR}/debug.log"
+
+depend() {
+    need bitcoind
+    need mariadb
+    need redis
+
+    if service_started fulcrum; then
+        need fulcrum
+    elif service_started electrs; then
+        need electrs
+    else
+        if service_exists fulcrum; then
+            need fulcrum
+        elif service_exists electrs; then
+            need electrs
+        else
+            eerror "Neither fulcrum nor electrs is installed or started"
+            return 1
+        fi
+    fi
+}
+
+service_exists() {
+    rc-service --list | grep -q "^$1$"
+}
+
+start_pre() {
+    checkpath --file      --mode 0660 --owner "${command_user}" "${MEMPOOL_CONFIGFILE}"
+    checkpath --directory --mode 0750 --owner "${command_user}" "${MEMPOOL_DATADIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${MEMPOOL_LOGDIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${MEMPOOL_PIDDIR}"
+}
+
+stop() {
+    ebegin "Stopping ${SVCNAME}"
+    pkill -TERM -P "$(cat ${pidfile})" > /dev/null 2>&1
+    start-stop-daemon \
+        --stop \
+        --pidfile="${pidfile}" \
+        --retry="${MEMPOOL_SIGTERM_TIMEOUT}" \
+        --exec="${MEMPOOL_BIN}"
+    eend $?
+}

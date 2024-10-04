@@ -1,0 +1,107 @@
+proxy_read_timeout 300;
+proxy_connect_timeout 300;
+proxy_send_timeout 300;
+ 
+map $http_accept_language $header_lang {
+    default en-US;
+    ~*^en-US en-US;
+    ~*^en en-US;
+    ~*^ar ar;
+    ~*^ca ca;
+    ~*^cs cs;
+    ~*^de de;
+    ~*^es es;
+    ~*^fa fa;
+    ~*^fr fr;
+    ~*^ko ko;
+    ~*^it it;
+    ~*^he he;
+    ~*^ka ka;
+    ~*^hu hu;
+    ~*^mk mk;
+    ~*^nl nl;
+    ~*^ja ja;
+    ~*^nb nb;
+    ~*^pl pl;
+    ~*^pt pt;
+    ~*^ro ro;
+    ~*^ru ru;
+    ~*^sl sl;
+    ~*^fi fi;
+    ~*^sv sv;
+    ~*^th th;
+    ~*^tr tr;
+    ~*^uk uk;
+    ~*^vi vi;
+    ~*^zh zh;
+    ~*^hi hi;
+}
+ 
+map $cookie_lang $lang {
+    default $header_lang;
+    ~*^en-US en-US;
+    ~*^en en-US;
+    ~*^ar ar;
+    ~*^ca ca;
+    ~*^cs cs;
+    ~*^de de;
+    ~*^es es;
+    ~*^fa fa;
+    ~*^fr fr;
+    ~*^ko ko;
+    ~*^it it;
+    ~*^he he;
+    ~*^ka ka;
+    ~*^hu hu;
+    ~*^mk mk;
+    ~*^nl nl;
+    ~*^ja ja;
+    ~*^nb nb;
+    ~*^pl pl;
+    ~*^pt pt;
+    ~*^ro ro;
+    ~*^ru ru;
+    ~*^sl sl;
+    ~*^fi fi;
+    ~*^sv sv;
+    ~*^th th;
+    ~*^tr tr;
+    ~*^uk uk;
+    ~*^vi vi;
+    ~*^zh zh;
+    ~*^hi hi;
+}
+  
+server {
+    listen {{ mempool_port_ssl }} ssl;  
+    include /etc/nginx/snippets/nginx-mempool.conf;
+ 
+    sendfile on;
+    tcp_nopush on;
+    tcp_nodelay on;
+ 
+    server_tokens off;
+    server_name_in_redirect off;
+ 
+    default_type application/octet-stream;
+ 
+    reset_timedout_connection on;
+    client_body_timeout 10s;
+    client_header_timeout 10s;
+    keepalive_timeout 69s;
+    send_timeout 69s;
+ 
+    keepalive_requests 1337;
+ 
+    gzip on;
+    gzip_vary on;
+    gzip_comp_level 6;
+    gzip_min_length 1000;
+    gzip_proxied expired no-cache no-store private auth;
+    gzip_types application/javascript application/json application/ld+json application/manifest+json application/x-font-ttf application/x-web-app-manifest+json application/xhtml+xml application/xml font/opentype image/bmp image/svg+xml image/x-icon text/cache-manifest text/css text/plain text/vcard;
+ 
+    client_max_body_size 10m;
+ 
+    proxy_cache off;
+    types_hash_max_size 2048;
+}
