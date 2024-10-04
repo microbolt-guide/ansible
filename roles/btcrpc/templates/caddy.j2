@@ -1,4 +1,4 @@
 :{{ btcrpc_port_ssl }} {
         import tls
-        reverse_proxy 127.0.0.1:3002
+        reverse_proxy 127.0.0.1:{{ btcrpc_port_tcp }}
 }
