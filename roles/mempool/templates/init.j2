@@ -31,7 +31,7 @@ start_stop_daemon_args="--env MEMPOOL_CONFIG_FILE=${MEMPOOL_CONFIGFILE}
 depend() {
     need bitcoind
     need mariadb
-    need redis
+    checkdepend REDIS redis
 
     if service_started fulcrum; then
         need fulcrum
@@ -46,6 +46,12 @@ depend() {
             eerror "Neither fulcrum nor electrs is installed or started"
             return 1
         fi
+    fi
+}
+
+checkdepend() {
+    if sed -n '/^[[:space:]]*"'${1}'": {/,/^[[:space:]]*}/p' "${MEMPOOL_CONFIGFILE}" | grep -qs '"ENABLED": true'; then
+        need "${2:-$1}"
     fi
 }
 
