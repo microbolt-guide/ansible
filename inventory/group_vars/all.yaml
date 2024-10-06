@@ -28,7 +28,7 @@ tor_mempool: false
 tor_public_pool: false
 
 # Bitcoin options
-bitcoin_version: 26.1.knots20240325 # latest or specific version
+bitcoin_version: latest # latest or specific version
 bitcoin_man: false
 bitcoin_rpc_username: microbolt
 bitcoin_rpc_password: passwd
