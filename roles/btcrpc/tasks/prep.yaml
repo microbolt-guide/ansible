@@ -1,14 +1,16 @@
 ---
-- name: Get version number of latest btc-rpc-explorer release
-  ansible.builtin.shell:
-    cmd: wget -qO- 'https://api.github.com/repos/janoside/btc-rpc-explorer/releases/latest' | grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
-  register: btcrpcexplorer_version_result
+- block:
+  - name: Get version number of latest btc-rpc-explorer release
+    ansible.builtin.shell:
+      cmd: wget -qO- 'https://api.github.com/repos/janoside/btc-rpc-explorer/releases/latest' | grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
+    register: btcrpc_version_result
+
+  - name: Set btcrpc_version fact
+    set_fact:
+      btcrpc_version: "{{ btcrpc_version_result.stdout }}"
+  when: btcrpc_version == "latest"
 
 - block:
-  - name: Set btcrpcexplorer_version fact
-    set_fact:
-      btcrpcexplorer_version: "{{ btcrpcexplorer_version_result.stdout }}"
-
   - name: Create btc-rpc-explorer system group
     ansible.builtin.group:
       system: true
@@ -58,7 +60,7 @@
   - block:
     - name: Download btc-rpc-explorer repository
       ansible.builtin.shell:
-        cmd: git clone --branch v{{ btcrpcexplorer_version }} https://github.com/janoside/btc-rpc-explorer.git
+        cmd: git clone --branch v{{ btcrpc_version }} https://github.com/janoside/btc-rpc-explorer.git
       args:
         chdir: /tmp
       register: import_keys_result
@@ -74,7 +76,7 @@
 
     - name: Verify btc-rpc-explorer tag
       ansible.builtin.shell:
-        cmd: git verify-commit v{{ btcrpcexplorer_version }}
+        cmd: git verify-commit v{{ btcrpc_version }}
       args:
         chdir: /tmp/btc-rpc-explorer
       register: verify_result
@@ -90,4 +92,4 @@
       ansible.builtin.file:
         state: absent
         path: /tmp/btc-rpc-explorer
-  when: btcrpcexplorer_version_result is not failed
+  when: btcrpc_version_result is not failed or btcrpc_version != "latest"

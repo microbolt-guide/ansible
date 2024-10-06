@@ -28,16 +28,19 @@ tor_mempool: false
 tor_public_pool: false
 
 # Bitcoin options
+bitcoin_version: 26.1.knots20240325 # latest or specific version
 bitcoin_man: false
 bitcoin_rpc_username: microbolt
 bitcoin_rpc_password: passwd
 bitcoin_dbcache: 4096
 
 # Electrum options
+electrum_version: latest # latest or specific version
 electrum_port_tcp: 50001
 electrum_port_ssl: 50002
 
 # BTC RPC Explorer options
+btcrpc_version: latest # latest or specific version
 btcrpc_port_tcp: 3002
 btcrpc_port_ssl: 4000
 btcrpc_theme: dark # dark or light
@@ -47,6 +50,7 @@ btcrpc_security_mode: false
 btcrpc_password: passwd # only if security_mode is true
 
 # Mempool options
+mempool_version: latest # latest or specific version
 mempool_port_tcp: 8999
 mempool_port_ssl: 4081
 mempool_redis: true
@@ -257,7 +261,7 @@ mempool_config_options:
   SOCKS5PROXY:
     ENABLED: true
   REDIS:
-    ENABLED: "{{ mempool_redis | ternary(true, false) }}"
+    ENABLED: "{{ mempool_redis }}"
     UNIX_SOCKET_PATH: '/var/run/redis/redis.sock'
 
 # Public Pool options

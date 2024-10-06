@@ -1,14 +1,16 @@
 ---
-- name: Get version number of latest mempool release
-  ansible.builtin.shell:
-    cmd: wget -qO- 'https://api.github.com/repos/mempool/mempool/releases/latest' | grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
-  register: mempool_version_result
-
 - block:
+  - name: Get version number of latest mempool release
+    ansible.builtin.shell:
+      cmd: wget -qO- 'https://api.github.com/repos/mempool/mempool/releases/latest' | grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
+    register: mempool_version_result
+
   - name: Set mempool_version fact
     set_fact:
       mempool_version: "{{ mempool_version_result.stdout }}"
+  when: mempool_version == "latest"
 
+- block:
   - name: Create mempool system group
     ansible.builtin.group:
       system: true
@@ -104,4 +106,4 @@
       ansible.builtin.file:
         state: absent
         path: "/tmp/mempool"
-  when: mempool_version_result is not failed
+  when: mempool_version_result is not failed or mempool_version != "latest"

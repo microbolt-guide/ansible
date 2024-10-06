@@ -1,14 +1,16 @@
 ---
-- name: Get version number of latest fulcrum release
-  ansible.builtin.shell:
-    cmd: wget -qO- 'https://api.github.com/repos/cculianu/Fulcrum/releases/latest' |  grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
-  register: fulcrum_version_result
-
 - block:
+  - name: Get version number of latest fulcrum release
+    ansible.builtin.shell:
+      cmd: wget -qO- 'https://api.github.com/repos/cculianu/Fulcrum/releases/latest' |  grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
+    register: fulcrum_version_result
+
   - name: Set fulcrum_version fact
     set_fact:
       fulcrum_version: "{{ fulcrum_version_result.stdout }}"
+  when: fulcrum_version == "latest"
 
+- block:
   - name: Create fulcrum system group
     ansible.builtin.group:
       system: true
@@ -90,4 +92,4 @@
       ansible.builtin.file:
         state: absent
         path: "/tmp/Fulcrum"
-  when: fulcrum_version_result is not failed
+  when: fulcrum_version_result is not failed or fulcrum_version != "latest"

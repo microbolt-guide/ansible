@@ -1,14 +1,16 @@
 ---
-- name: Get version number of latest electrs release
-  ansible.builtin.shell:
-    cmd: wget -qO- 'https://api.github.com/repos/romanz/electrs/releases/latest' | grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
-  register: electrs_version_result
-
 - block:
+  - name: Get version number of latest electrs release
+    ansible.builtin.shell:
+      cmd: wget -qO- 'https://api.github.com/repos/romanz/electrs/releases/latest' | grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
+    register: electrs_version_result
+
   - name: Set electrs_version fact
     set_fact:
       electrs_version: "{{ electrs_version_result.stdout }}"
+  when: electrs_version == "latest"
 
+- block:
   - name: Create electrs system group
     ansible.builtin.group:
       system: true
@@ -90,4 +92,4 @@
       ansible.builtin.file:
         state: absent
         path: "/tmp/electrs"
-  when: electrs_version_result is not failed
+  when: electrs_version_result is not failed or electrs_version != "latest"

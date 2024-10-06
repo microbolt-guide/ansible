@@ -1,14 +1,16 @@
 ---
-- name: Get version number of latest bitcoin {{ bitcoin_role }} release
-  ansible.builtin.shell:
-    cmd: wget -qO- 'https://api.github.com/repos/{{ 'bitcoin' if bitcoin_role == 'core' else 'bitcoinknots' if bitcoin_role == 'knots' }}/bitcoin/releases/latest' |  grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
-  register: bitcoin_version_result
-
 - block:
+  - name: Get version number of latest bitcoin {{ bitcoin_role }} release
+    ansible.builtin.shell:
+      cmd: wget -qO- 'https://api.github.com/repos/{{ 'bitcoin' if bitcoin_role == 'core' else 'bitcoinknots' if bitcoin_role == 'knots' }}/bitcoin/releases/latest' |  grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
+    register: bitcoin_version_result
+
   - name: Set bitcoin_version fact
     set_fact:
       bitcoin_version: "{{ bitcoin_version_result.stdout }}"
+  when: bitcoin_version == "latest"
 
+- block:
   - name: Create bitcoin system group
     ansible.builtin.group:
       system: true
@@ -111,4 +113,4 @@
       - "/tmp/bitcoin-{{ bitcoin_version }}"
       - "/tmp/SHA256SUMS.asc"
       - "/tmp/SHA256SUMS"
-  when: bitcoin_version_result is not failed
+  when: bitcoin_version_result is not failed or bitcoin_version != "latest"
