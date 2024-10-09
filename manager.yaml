@@ -3,16 +3,19 @@
   hosts: all
   gather_facts: true
   tasks:
-    - set_fact:
-        service_list: >-
+    - ansible.builtin.set_fact:
+        def_service_list: >-
           {{
-            service_list | map('regex_replace', 'awall', 'iptables,ip6tables') | join(',')
+            service_list.split(',')
+            | map('regex_replace', 'awall', 'iptables,ip6tables')
+            | join(',')
+            | split(',')
           }}
 
     - ansible.builtin.service:
         name: "{{ item }}"
         state: "{{ service_state }}"
-      loop: "{{ service_list }}"
+      loop: "{{ def_service_list }}"
       when:
         - service_state is defined and service_state != ""
         - service_enabled is not defined or service_enabled == ""
@@ -20,7 +23,7 @@
     - ansible.builtin.service:
         name: "{{ item }}"
         enabled: "{{ service_enabled }}"
-      loop: "{{ service_list }}"
+      loop: "{{ def_service_list }}"
       when:
         - service_state is not defined or service_state == ""
         - service_enabled is defined and service_enabled != ""
@@ -29,7 +32,7 @@
         name: "{{ item }}"
         state: "{{ service_state }}"
         enabled: "{{ service_enabled }}"
-      loop: "{{ service_list }}"
+      loop: "{{ def_service_list }}"
       when:
         - service_state is defined and service_state != ""
         - service_enabled is defined and service_enabled != ""
