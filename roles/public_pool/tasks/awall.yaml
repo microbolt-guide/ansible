@@ -1,0 +1,17 @@
+---
+- name: Deploy awall configurations
+  ansible.builtin.template:
+    src: templates/awall-{{ item }}.j2
+    dest: /etc/awall/optional/public-pool-{{ item }}.json
+    owner: root
+    group: root
+    mode: '0644'
+  loop:
+    - ui
+    - stratum
+
+- name: Enable public-pool policies
+  community.general.awall:
+    name: [ public-pool-ui public-pool-stratum ]
+    state: enabled
+    activate: true

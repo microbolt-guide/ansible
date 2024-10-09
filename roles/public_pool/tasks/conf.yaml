@@ -1,0 +1,25 @@
+---
+- block:
+  - name: Public Pool configuration
+    ansible.builtin.lineinfile:
+      path: /etc/public-pool/public-pool.env
+      regexp: '^#?{{ item.split("=")[0] }}='
+      line: '{{ item }}'
+      state: present
+    loop: "{{ public_pool_config_options }}"
+
+  - include_tasks: tor.yaml
+    when: tor_public_pool
+
+  - name: Public Pool logrotate script
+    ansible.builtin.template:
+      src: logrotate.j2
+      dest: /etc/logrotate.d/public-pool
+      mode: '0644'
+  
+  - name: Public Pool init script
+    ansible.builtin.template:
+      src: init.j2
+      dest: /etc/init.d/public-pool
+      mode: '0755'
+  when: build_result is not failed

@@ -51,3 +51,12 @@
       ansible.builtin.include_role:
         name: "{{ item }}"
       loop: "{{ explorer_role }}"
+
+- name: Install public pool
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Include the public_pool role
+      ansible.builtin.include_role:
+        name: public_pool
+      when: pool_role | default(false)

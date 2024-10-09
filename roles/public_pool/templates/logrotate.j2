@@ -1,0 +1,13 @@
+/var/log/public-pool/*.log {
+    weekly
+    missingok
+    rotate 104
+    compress
+    delaycompress
+    notifempty
+    create 0640 public-pool public-pool
+    sharedscripts
+    postrotate
+        killall -HUP `cat /run/public-pool/public-pool.pid`
+    endscript
+}

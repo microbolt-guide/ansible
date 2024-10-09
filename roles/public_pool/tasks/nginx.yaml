@@ -1,0 +1,14 @@
+---
+- name: Deploy nginx configuration
+  ansible.builtin.template:
+    src: templates/nginx.j2
+    dest: /etc/nginx/sites-available/public-pool-reverse-proxy.conf
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Create symbolic link for nginx configuration
+  ansible.builtin.file:
+    src: /etc/nginx/sites-available/public-pool-reverse-proxy.conf
+    dest: /etc/nginx/sites-enabled/public-pool-reverse-proxy.conf
+    state: link

@@ -56,6 +56,12 @@ mempool_port_ssl: 4081
 mempool_redis: true
 
 # Public Pool options
+public_pool_commit: latest # latest or specific commit
+public_pool_ui_commit: latest # latest or specific commit
+public_pool_ui_port_tcp: 8080
+public_pool_ui_port_ssl: 4040
+public_pool_api_port: 23334
+public_pool_stratum_port: 23333
 
 # Lightning options
 lnd_slow_device_mode: false
@@ -265,13 +271,19 @@ mempool_config_options:
     UNIX_SOCKET_PATH: '/var/run/redis/redis.sock'
 
 # Public Pool options
-public_pool_keys_url:
+#public_pool_keys_url: null
 public_pool_build_deps:
   - git
   - npm
 public_pool_runtime_deps:
   - nodejs-current
 public_pool_config_options:
+  - BITCOIN_RPC_URL=http://127.0.0.1
+  - BITCOIN_RPC_COOKIEFILE="/var/lib/bitcoind/.cookie"
+  - BITCOIN_ZMQ_HOST="tcp://127.0.0.1:28332"
+  - API_PORT={{ public_pool_api_port }}
+  - STRATUM_PORT={{ public_pool_stratum_port }}
+  - POOL_IDENTIFIER="microbolt"
 
 # Lightning options
 lnd_keys_url: https://raw.githubusercontent.com/lightningnetwork/lnd/master/scripts/keys/roasbeef.asc

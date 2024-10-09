@@ -1,0 +1,13 @@
+{
+  "description": "Allow Public Pool Stratum",
+ 
+  "filter": [
+    {
+      "in": "internet",
+      "out": "_fw",
+      "service": { "proto": "tcp", "port": {{ public_pool_stratum_port }} },
+      "action": "accept",
+      "conn-limit": { "count": 10, "interval": 60 }
+    }
+  ]
+}

@@ -1,0 +1,65 @@
+#!/sbin/openrc-run
+
+: ${PUBLICPOOL_ENVFILE:=/etc/public-pool/public-pool.env}
+: ${PUBLICPOOL_WEBUI:=/var/www/public-pool-ui}
+: ${PUBLICPOOL_DATADIR:=/var/lib/public-pool}
+: ${PUBLICPOOL_LOGDIR:=/var/log/public-pool}
+: ${PUBLICPOOL_USER:=public-pool}
+: ${PUBLICPOOL_GROUP:=public-pool}
+: ${PUBLICPOOL_BIN:=/usr/bin/public-pool}
+: ${PUBLICPOOL_OPTS=${PUBLICPOOL_OPTS}}
+: ${PUBLICPOOL_SIGTERM_TIMEOUT:=600}
+
+PUBLICPOOL_PIDDIR="/run/public-pool"
+
+directory="${PUBLICPOOL_DATADIR}"
+required_files="${PUBLICPOOL_ENVFILE}"
+pidfile="${PUBLICPOOL_PIDDIR}/${SVCNAME}.pid"
+
+name="Public Pool"
+description="Fully Open Source Solo Bitcoin Mining Pool"
+
+command="${PUBLICPOOL_BIN}"
+command_args="--env-file=${PUBLICPOOL_ENVFILE}
+              ${PUBLICPOOL_OPTS}"
+command_user="${PUBLICPOOL_USER}:${PUBLICPOOL_GROUP}"
+command_background="true"
+
+start_stop_daemon_args="--stdout ${PUBLICPOOL_LOGDIR}/debug.log
+                        --stderr ${PUBLICPOOL_LOGDIR}/debug.log"
+
+depend() {
+    need bitcoind
+}
+
+start_pre() {
+    checkpath --file      --mode 0660 --owner "${command_user}" "${PUBLICPOOL_ENVFILE}"
+    checkpath --directory --mode 0750 --owner "${command_user}" "${PUBLICPOOL_DATADIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${PUBLICPOOL_LOGDIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${PUBLICPOOL_PIDDIR}"
+    checkpath --directory --mode 0755 --owner "${command_user}" "${PUBLICPOOL_WEBUI}"
+    checkconfig
+}
+
+checkconfig() {
+    if ! grep -qs '^BITCOIN_RPC_COOKIEFILE=' "${PUBLICPOOL_ENVFILE}"
+    then
+        eerror ""
+        eerror "ERROR: You must set a BITCOIN_RPC_COOKIEFILE path"
+        eerror "to run Public pool."
+        eerror "The setting must appear in ${PUBLICPOOL_ENVFILE}"
+        eerror ""
+        return 1
+    fi
+}
+
+stop() {
+    ebegin "Stopping ${SVCNAME}"
+    pkill -TERM -P "$(cat ${pidfile})"
+    start-stop-daemon \
+        --stop \
+        --pidfile="${pidfile}" \
+        --retry="${PUBLICPOOL_SIGTERM_TIMEOUT}" \
+        --exec="${PUBLICPOOL_BIN}"
+    eend $?
+}

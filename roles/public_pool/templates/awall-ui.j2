@@ -1,0 +1,13 @@
+{
+  "description": "Allow Public Pool UI SSL",
+ 
+  "filter": [
+    {
+      "in": "internet",
+      "out": "_fw",
+      "service": { "proto": "tcp", "port": {{ public_pool_ui_port_ssl }} },
+      "action": "accept",
+      "conn-limit": { "count": 10, "interval": 60 }
+    }
+  ]
+}

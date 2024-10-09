@@ -1,0 +1,13 @@
+:{{ public_pool_ui_port_ssl }} {
+    import tls
+    root /var/www/public-pool-ui
+
+    handle /api/* {
+        reverse_proxy 127.0.0.1:{{ public_pool_api_port }}
+    }
+
+    handle {
+        try_files {path} {path}/ =404
+        file_server
+    }
+}

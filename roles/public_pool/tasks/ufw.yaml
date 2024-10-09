@@ -1,0 +1,14 @@
+---
+- name: Allow Public Pool UI
+  community.general.ufw:
+    rule: limit
+    port: "{{ public_pool_ui_port_ssl }}"
+    proto: tcp
+    comment: "Allow Public Pool UI SSL"
+
+- name: Allow Public Pool Stratum
+  community.general.ufw:
+    rule: limit
+    port: "{{ public_pool_stratum_port }}"
+    proto: tcp
+    comment: "Allow Public Pool Stratum"

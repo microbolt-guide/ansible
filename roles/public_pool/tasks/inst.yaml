@@ -1,0 +1,128 @@
+---
+- name: backend
+  block:
+    - name: Install backend dependencies
+      community.general.npm:
+        ci: true
+        path: /tmp/public-pool
+
+    - name: Build backend
+      ansible.builtin.shell:
+        cmd: npm run build
+        chdir: /tmp/public-pool
+
+    - name: Install backend globally
+      block:
+        - name: Create directories
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: directory
+            owner: public-pool
+            group: public-pool
+            mode: '0755'
+          loop:
+            - /tmp/public-pool/dist/bin
+            - /etc/public-pool
+          loop_control:
+            label: "{{ item }}"
+        - name: Create cli.sh
+          ansible.builtin.copy:
+            dest: /tmp/public-pool/dist/bin/cli.sh
+            mode: a+x
+            content: |
+              #!/bin/sh
+              node $@ /var/lib/public-pool/main
+        - name: Copy files
+          ansible.builtin.copy:
+            src: /tmp/public-pool/.env.example
+            dest: /etc/public-pool/public-pool.env
+            owner: public-pool
+            group: public-pool
+            mode: '0660'
+            remote_src: yes
+        - ansible.builtin.copy:
+            src: /tmp/public-pool/dist/
+            dest: /var/lib/public-pool
+            owner: root
+            group: root
+            mode: '0755'
+            remote_src: yes
+        - ansible.builtin.copy:
+            src: /tmp/public-pool/node_modules
+            dest: /var/lib/public-pool/
+            owner: root
+            group: root
+            mode: '0755'
+            remote_src: yes
+        - name: Link files
+          ansible.builtin.file:
+            src: /var/lib/public-pool
+            path: /usr/lib/node_modules/public-pool
+            state: link
+        - ansible.builtin.file:
+            src: ../lib/node_modules/public-pool/bin/cli.sh
+            path: /usr/bin/public-pool
+            state: link
+            force: true
+            follow: false
+  when: clone_result is not failed
+
+  rescue:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "{{ item }}"
+      loop:
+        - /tmp/public-pool
+        - /tmp/public-pool-ui
+
+- name: frontend
+  block:
+    - name: Install frontend dependencies
+      community.general.npm:
+        ci: true
+        path: /tmp/public-pool-ui
+
+    - name: Create custom environment.prod.ts
+      ansible.builtin.copy:
+        dest: /tmp/public-pool-ui/src/environments/environment.prod.ts
+        content: |
+          let path = window.location.origin + window.location.pathname;
+          path = path.endsWith('/') ? path.slice(0, -1) : path;
+          let stratumUrl = path.replace(/(^\w+:|^)\/\//, '').replace(/:\d+/, '');
+
+          export const environment = {
+              production: true,
+              API_URL: path,
+              STRATUM_URL: stratumUrl + ':23333'
+          };
+
+    - name: Build frontend
+      ansible.builtin.shell:
+        cmd: npm run build
+        chdir: /tmp/public-pool-ui
+      register: build_result
+
+    - name: Install frontend globally
+      ansible.builtin.copy:
+        src: /tmp/public-pool-ui/dist/public-pool-ui
+        dest: /var/www
+        owner: root
+        group: root
+        mode: '0755'
+        remote_src: yes
+  when: clone_result is not failed
+
+  always:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "{{ item }}"
+      loop:
+        - /tmp/public-pool
+        - /tmp/public-pool-ui
+
+    - name: Remove build deps
+      community.general.apk:
+        name: "{{ public_pool_build_deps | join(',') }}"
+        state: absent
