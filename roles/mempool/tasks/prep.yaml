@@ -77,7 +77,6 @@
         cmd: git clone --branch v{{ mempool_version }} https://github.com/mempool/mempool.git
       args:
         chdir: /tmp
-      register: import_keys_result
 
     - name: Import PGP keys from GitHub repository
       ansible.builtin.shell:

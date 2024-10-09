@@ -63,7 +63,6 @@
         cmd: git clone --branch v{{ btcrpc_version }} https://github.com/janoside/btc-rpc-explorer.git
       args:
         chdir: /tmp
-      register: import_keys_result
 
     - name: Import PGP keys from GitHub repository
       ansible.builtin.shell:

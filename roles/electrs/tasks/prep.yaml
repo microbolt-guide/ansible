@@ -3,12 +3,12 @@
   - name: Get version number of latest electrs release
     ansible.builtin.shell:
       cmd: wget -qO- 'https://api.github.com/repos/romanz/electrs/releases/latest' | grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
-    register: electrs_version_result
+    register: electrum_version_result
 
-  - name: Set electrs_version fact
+  - name: Set electrum_version fact
     set_fact:
-      electrs_version: "{{ electrs_version_result.stdout }}"
-  when: electrs_version == "latest"
+      electrum_version: "{{ electrum_version_result.stdout }}"
+  when: electrum_version == "latest"
 
 - block:
   - name: Create electrs system group
@@ -60,10 +60,9 @@
   - block:
     - name: Download electrs repository
       ansible.builtin.shell:
-        cmd: git clone --branch v{{ electrs_version }} https://github.com/romanz/electrs.git
+        cmd: git clone --branch v{{ electrum_version }} https://github.com/romanz/electrs.git
       args:
         chdir: /tmp
-      register: import_keys_result
 
     - name: Import PGP keys from GitHub repository
       ansible.builtin.shell:
@@ -76,7 +75,7 @@
 
     - name: Verify electrs tag
       ansible.builtin.shell:
-        cmd: git verify-tag v{{ electrs_version }}
+        cmd: git verify-tag v{{ electrum_version }}
       args:
         chdir: /tmp/electrs
       register: verify_result
@@ -92,4 +91,4 @@
       ansible.builtin.file:
         state: absent
         path: "/tmp/electrs"
-  when: electrs_version_result is not failed or electrs_version != "latest"
+  when: electrum_version_result is not failed or electrum_version != "latest"

@@ -3,12 +3,12 @@
   - name: Get version number of latest fulcrum release
     ansible.builtin.shell:
       cmd: wget -qO- 'https://api.github.com/repos/cculianu/Fulcrum/releases/latest' |  grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
-    register: fulcrum_version_result
+    register: electrum_version_result
 
-  - name: Set fulcrum_version fact
+  - name: Set electrum_version fact
     set_fact:
-      fulcrum_version: "{{ fulcrum_version_result.stdout }}"
-  when: fulcrum_version == "latest"
+      electrum_version: "{{ electrum_version_result.stdout }}"
+  when: electrum_version == "latest"
 
 - block:
   - name: Create fulcrum system group
@@ -60,10 +60,9 @@
   - block:
     - name: Download fulcrum repository
       ansible.builtin.shell:
-        cmd: git clone --branch v{{ fulcrum_version }} https://github.com/cculianu/Fulcrum.git
+        cmd: git clone --branch v{{ electrum_version }} https://github.com/cculianu/Fulcrum.git
       args:
         chdir: /tmp
-      register: import_keys_result
 
     - name: Import PGP keys from GitHub repository
       ansible.builtin.shell:
@@ -76,7 +75,7 @@
 
     - name: Verify fulcrum tag
       ansible.builtin.shell:
-        cmd: git verify-commit v{{ fulcrum_version }}
+        cmd: git verify-commit v{{ electrum_version }}
       args:
         chdir: /tmp/Fulcrum
       register: verify_result
@@ -92,4 +91,4 @@
       ansible.builtin.file:
         state: absent
         path: "/tmp/Fulcrum"
-  when: fulcrum_version_result is not failed or fulcrum_version != "latest"
+  when: electrum_version_result is not failed or electrum_version != "latest"
