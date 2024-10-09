@@ -62,11 +62,10 @@
           loop_control:
             label: "{{ item }}"
         - name: Create cli.sh
-          ansible.builtin.blockinfile:
-            path: /tmp/mempool/backend/package/bin/cli.sh
-            create: true
+          ansible.builtin.copy:
+            dest: /tmp/mempool/backend/package/bin/cli.sh
             mode: a+x
-            block: |
+            content: |
               #!/bin/sh
               node /var/lib/mempool/index.js
         - name: Copy files
@@ -78,7 +77,7 @@
             mode: '0660'
             remote_src: yes
         - ansible.builtin.copy:
-            src: /tmp/mempool/backend/package
+            src: /tmp/mempool/backend/package/
             dest: /var/lib/mempool
             owner: root
             group: root
