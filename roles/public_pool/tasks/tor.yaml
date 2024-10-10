@@ -4,7 +4,7 @@
     path: /etc/tor/torrc
     insertafter: '## This section is just for location-hidden services ##'
     block: |
-      # Hidden Service Public Pool Space
+      # Hidden Service Public Pool
       HiddenServiceDir /var/lib/tor/public-pool/
       HiddenServiceVersion 3
       HiddenServicePoWDefensesEnabled 1
