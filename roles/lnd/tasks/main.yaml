@@ -1,0 +1,14 @@
+---
+# Dependencies
+- include_tasks: deps.yaml
+# Preparation, firewall and reverse proxy
+- include_tasks: prep.yaml
+# Installation
+- include_tasks: inst.yaml
+# Configuration and start service
+- include_tasks: conf.yaml
+
+- name: Include thunderhub role
+  ansible.builtin.include_role:
+    name: thunderhub
+  when: lnd_web_app

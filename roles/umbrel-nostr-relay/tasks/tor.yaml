@@ -1,0 +1,20 @@
+---
+- name: Add Hidden Service Umbrel Nostr Relay server configuration
+  ansible.builtin.blockinfile:
+    path: /etc/tor/torrc
+    insertafter: '## This section is just for location-hidden services ##'
+    block: |
+      # Hidden Service Umbrel Nostr Relay
+      HiddenServiceDir /var/lib/tor/umbrel-nostr-relay/
+      HiddenServiceVersion 3
+      HiddenServicePoWDefensesEnabled 1
+      HiddenServicePort 443 127.0.0.1:{{ umbrel_port_ssl }}
+
+- name: Get the umbrel Onion address
+  ansible.builtin.command:
+    cmd: cat /var/lib/tor/umbrel-nostr-relay/hostname
+  register: umbrel_onion_address
+
+- name: Display umbrel Onion address
+  ansible.builtin.debug:
+    msg: "Umbrel Nostr Relay Onion address: {{ umbrel_onion_address.stdout }}"

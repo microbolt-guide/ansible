@@ -1,0 +1,14 @@
+---
+- name: Install build dependencies
+  ansible.builtin.apk:
+    name: "{{ lnd_build_deps | join(',') }}"
+    state: latest
+    update_cache: true
+  when: lnd_build_deps is defined
+
+- name: Install runtime dependencies
+  ansible.builtin.apk:
+    name: "{{ lnd_runtime_deps | join(',') }}"
+    state: latest
+    update_cache: true
+  when: lnd_runtime_deps is defined

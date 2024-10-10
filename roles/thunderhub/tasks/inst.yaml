@@ -1,0 +1,101 @@
+---
+- block:
+  - name: Install all dependencies
+    community.general.npm:
+      ci: true
+      path: /tmp/thunderhub
+
+  - name: Build ThunderHub
+    ansible.builtin.shell:
+      cmd: npm run build
+      chdir: /tmp/thunderhub
+
+  - name: Create directories
+    ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      owner: thunderhub
+      group: thunderhub
+      mode: '0755'
+    loop:
+      - /tmp/thunderhub/dist/bin
+      - /etc/thunderhub
+
+  - name: Create cli.sh
+    ansible.builtin.copy:
+      dest: /tmp/thunderhub/dist/bin/cli.sh
+      mode: a+x
+      content: |
+        #!/bin/sh
+        npm_package_version='{{ thunderhub_version }}' \
+        node $@ /var/lib/thunderhub/main
+    register: install_result
+
+  when: verify_result is not failed
+
+  rescue:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: /tmp/thunderhub
+
+- name: Install globally
+  block:
+    - name: Copy files
+      ansible.builtin.copy:
+        src: /tmp/thunderhub/dist/
+        dest: /var/lib/thunderhub
+        owner: thunderhub
+        group: thunderhub
+        mode: '0755'
+        remote_src: yes
+    - ansible.builtin.copy:
+        src: /tmp/thunderhub/node_modules
+        dest: /var/lib/thunderhub
+        owner: thunderhub
+        group: thunderhub
+        mode: '0755'
+        remote_src: yes
+    - name: Create directories
+      ansible.builtin.file:
+        path: /var/lib/thunderhub/src/client
+        state: directory
+        owner: thunderhub
+        group: thunderhub
+        mode: '0755'
+    - name: Copy files
+      ansible.builtin.copy:
+        src: "/tmp/thunderhub/src/client/{{ item }}"
+        dest: /var/lib/thunderhub/src/client
+        owner: thunderhub
+        group: thunderhub
+        mode: '0755'
+        remote_src: yes
+      loop:
+        - public
+        - next.config.js
+        - .next
+    - name: Link files
+      ansible.builtin.file:
+        src: /var/lib/thunderhub
+        path: /usr/lib/node_modules/thunderhub
+        state: link
+    - ansible.builtin.file:
+        src: ../lib/node_modules/thunderhub/bin/cli.sh
+        path: /usr/bin/thunderhub
+        state: link
+        force: true
+        follow: false
+
+  when: install_result is not failed
+
+  always:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: /tmp/thunderhub
+
+    - name: Remove build deps
+      community.general.apk:
+        name: "{{ thunderhub_build_deps | join(',') }}"
+        state: absent

@@ -1,0 +1,7 @@
+---
+- name: Allow Umbrel Nostr Relay webGUI
+  community.general.ufw:
+    rule: limit
+    port: "{{ umbrel_port_ssl }}"
+    proto: tcp
+    comment: "Allow Umbrel Nostr Relay webGUI SSL"

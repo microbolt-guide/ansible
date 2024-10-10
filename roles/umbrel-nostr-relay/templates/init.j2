@@ -1,0 +1,53 @@
+#!/sbin/openrc-run
+
+: ${UMBREL_NOSTR_RELAY_ENVFILE:=/etc/umbrel-nostr-relay/umbrel.env}
+: ${UMBREL_NOSTR_RELAY_DATADIR:=/var/lib/umbrel-nostr-relay}
+: ${UMBREL_NOSTR_RELAY_LOGDIR:=/var/log/umbrel-nostr-relay}
+: ${UMBREL_NOSTR_RELAY_USER:=umbrel}
+: ${UMBREL_NOSTR_RELAY_GROUP:=umbrel}
+: ${UMBREL_NOSTR_RELAY_BIN:=/usr/bin/umbrel-nostr-relay}
+: ${UMBREL_NOSTR_RELAY_OPTS=${UMBREL_NOSTR_RELAY_OPTS}}
+: ${UMBREL_NOSTR_RELAY_SIGTERM_TIMEOUT:=600}
+
+UMBREL_NOSTR_RELAY_PIDDIR="/run/umbrel-nostr-relay"
+
+directory="${UMBREL_NOSTR_RELAY_DATADIR}"
+required_files="${UMBREL_NOSTR_RELAY_ENVFILE}"
+pidfile="${UMBREL_NOSTR_RELAY_PIDDIR}/${SVCNAME}.pid"
+retry="${UMBREL_NOSTR_RELAY_SIGTERM_TIMEOUT}"
+capabilities="^cap_net_bind_service"
+
+name="Umbrel Nostr Relay"
+description="A Nostr relay webGUI made by Umbrel"
+
+command="${UMBREL_NOSTR_RELAY_BIN}"
+command_args="--env-file=${UMBREL_NOSTR_RELAY_ENVFILE}
+							${UMBREL_NOSTR_RELAY_OPTS}"
+command_user="${UMBREL_NOSTR_RELAY_USER}:${UMBREL_NOSTR_RELAY_GROUP}"
+command_background="true"
+
+start_stop_daemon_args="--stdout ${UMBREL_NOSTR_RELAY_LOGDIR}/debug.log
+												--stderr ${UMBREL_NOSTR_RELAY_LOGDIR}/debug.log"
+
+depend() {
+		need nostr-rs-relay
+}
+
+start_pre() {
+		checkpath --directory --mode 0755 --owner "${command_user}" "${UMBREL_NOSTR_RELAY_ENVFILE%/*}"
+		checkpath --file      --mode 0660 --owner "${command_user}" "${UMBREL_NOSTR_RELAY_ENVFILE}"
+		checkpath --directory --mode 0750 --owner "${command_user}" "${UMBREL_NOSTR_RELAY_DATADIR}"
+		checkpath --directory --mode 0755 --owner "${command_user}" "${UMBREL_NOSTR_RELAY_LOGDIR}"
+		checkpath --directory --mode 0755 --owner "${command_user}" "${UMBREL_NOSTR_RELAY_PIDDIR}"
+}
+
+stop() {
+		ebegin "Stopping ${SVCNAME}"
+		pkill -TERM -P "$(cat ${pidfile})" > /dev/null 2>&1
+		start-stop-daemon \
+				--stop \
+				--pidfile="${pidfile}" \
+				--retry="${UMBREL_NOSTR_RELAY_SIGTERM_TIMEOUT}" \
+				--exec="${UMBREL_NOSTR_RELAY_BIN}"
+		eend $?
+}

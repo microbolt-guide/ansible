@@ -1,0 +1,24 @@
+:{{ umbrel_port_ssl }} {
+				import tls
+				root * /var/www/umbrel-nostr-relay
+				encode gzip
+
+				@websockets {
+								header Connection *Upgrade*
+								header Upgrade    websocket
+				}
+
+				@nostr {
+								header Accept application/nostr+json
+				}
+
+				@relayproxy {
+								path /relay-proxy/*
+				}
+
+				reverse_proxy @websockets 127.0.0.1:{{ nostr_port_tcp }}
+				reverse_proxy @nostr 127.0.0.1:{{ nostr_port_tcp }}
+				reverse_proxy @relayproxy 127.0.0.1:{{ umbrel_port_proxy }}
+
+				file_server
+}

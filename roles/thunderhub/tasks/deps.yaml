@@ -1,0 +1,12 @@
+---
+- name: Install build dependencies
+  ansible.builtin.apk:
+    name: "{{ thunderhub_build_deps | join(',') }}"
+    state: latest
+    update_cache: true
+
+- name: Install runtime dependencies
+  ansible.builtin.apk:
+    name: "{{ thunderhub_runtime_deps | join(',') }}"
+    state: latest
+    update_cache: true

@@ -13,6 +13,7 @@ btc-rpc-explorer,\
 mempool,\
 public-pool,\
 {{ lightning_role }},\
+thunderhub, \
 nostr-rs-relay,\
 umbrel-nostr-relay,\
 "
@@ -54,6 +55,7 @@ Services:
   public-pool                   Manage the public-pool service
     publicpool, pool
   lightning, lnd                Manage the lightning service
+  thunderhub                    Manage the thunderhub service
   nostr-relay                   Manage the nostr-rs-relay service
     nostr-rs-relay
     nostr-relay-only
@@ -143,6 +145,9 @@ IFS=,; for service in $in_services; do
         ;;
         lightning|lnd)
             services="${services}{{ lightning_role }},"
+        ;;
+        thunderhub)
+            services="${services}thunderhub,"
         ;;
         nostr-relay|nostr-rs-relay|nostr-relay-only)
             services="${services}nostr-rs-relay,"

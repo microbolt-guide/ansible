@@ -1,0 +1,13 @@
+/var/log/thunderhub/*.log {
+    weekly
+    missingok
+    rotate 104
+    compress
+    delaycompress
+    notifempty
+    create 0640 thunderhub thunderhub
+    sharedscripts
+    postrotate
+        killall -HUP `cat /run/thunderhub/thunderhub.pid`
+    endscript
+}

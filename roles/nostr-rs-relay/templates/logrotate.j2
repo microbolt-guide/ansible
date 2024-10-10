@@ -1,0 +1,13 @@
+/var/log/nostr-rs-relay/*.log {
+    weekly
+    missingok
+    rotate 104
+    compress
+    delaycompress
+    notifempty
+    create 0640 nostr nostr
+    sharedscripts
+    postrotate
+        killall -HUP `cat /run/nostr-rs-relay/nostr-rs-relay.pid`
+    endscript
+}

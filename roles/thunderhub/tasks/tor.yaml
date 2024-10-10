@@ -1,0 +1,20 @@
+---
+- name: Add Hidden Service Thunderhub server configuration
+  ansible.builtin.blockinfile:
+    path: /etc/tor/torrc
+    insertafter: '## This section is just for location-hidden services ##'
+    block: |
+      # Hidden Service Thunderhub
+      HiddenServiceDir /var/lib/tor/thunderhub/
+      HiddenServiceVersion 3
+      HiddenServicePoWDefensesEnabled 1
+      HiddenServicePort 443 127.0.0.1:{{ thunderhub_port_ssl }}
+
+- name: Get the Thunderhub Onion address
+  ansible.builtin.command:
+    cmd: cat /var/lib/tor/thunderhub/hostname
+  register: thunderhub_onion_address
+
+- name: Display Thunderhub Onion address
+  ansible.builtin.debug:
+    msg: "Thunderhub Onion address: {{ thunderhub_onion_address.stdout }}"

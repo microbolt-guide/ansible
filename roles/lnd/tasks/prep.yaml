@@ -1,0 +1,126 @@
+---
+- block:
+  - name: Get version number of latest lnd release
+    ansible.builtin.shell:
+      cmd: wget -qO- 'https://api.github.com/repos/lightningnetwork/lnd/releases/latest' |  grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
+    register: lnd_version_result
+
+  - name: Set lnd_version fact
+    set_fact:
+      lnd_version: "{{ lnd_version_result.stdout }}"
+  when: lnd_version == "latest"
+
+- block:
+  - name: Create lnd system group
+    ansible.builtin.group:
+      system: true
+      name: lnd
+      state: present
+
+  - name: Create lnd system user
+    ansible.builtin.user:
+      system: true
+      password: "!"
+      create_home: false
+      home: /var/lib/lnd
+      shell: /sbin/nologin
+      group: lnd
+      comment: "lnd"
+      name: lnd
+      state: present
+
+  - name: Add user lnd to bitcoin group
+    ansible.builtin.user:
+      name: lnd
+      groups: bitcoin
+      append: true
+      state: present
+
+  - name: Add user {{ ansible_user }} to lnd group
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups: lnd
+      append: true
+      state: present
+
+  - name: Add user lnd to tor group
+    ansible.builtin.user:
+      name: lnd
+      groups: tor
+      append: true
+      state: present
+
+  - block:
+    # Firewall
+    - include_tasks: awall.yaml
+      when: firewall_role == 'awall'
+
+    - include_tasks: ufw.yaml
+      when: firewall_role == 'ufw'
+
+    # Reverse Proxy
+    - include_tasks: caddy.yaml
+      when: reverse_proxy_role == 'caddy'
+
+    - include_tasks: nginx.yaml
+      when: reverse_proxy_role == 'nginx'
+    when: lnd_rest_connect | bool
+
+  - block:
+    - name: Create a symbolic link lnd to {{ ansible_user }} home
+      ansible.builtin.file:
+        src: /var/lib/lnd
+        dest: "$HOME/.lnd"
+        state: link
+        force: true
+        follow: false
+
+    - name: Download lnd tarball
+      ansible.builtin.get_url:
+        url: "{{ lnd_base_url }}/lnd-linux-amd64-v{{ lnd_version }}.tar.gz"
+        dest: "/tmp"
+        checksum: "sha256:{{ lnd_base_url }}/manifest-v{{ lnd_version }}.txt"
+
+    - name: Download lnd manifest-v{{ lnd_version }}.txt
+      ansible.builtin.get_url:
+        url: "{{ lnd_base_url }}/manifest-v{{ lnd_version }}.txt"
+        dest: "/tmp"
+
+    - name: Download lnd manifest-roasbeef-v{{ lnd_version }}.sig
+      ansible.builtin.get_url:
+        url: "{{ lnd_base_url }}/manifest-roasbeef-v{{ lnd_version }}.sig"
+        dest: "/tmp"
+
+    - name: Import PGP keys from GitHub repository
+      ansible.builtin.shell:
+        cmd: |
+          wget -qO- "{{ lnd_keys_url }}" | gpg --import
+      register: import_keys_result
+
+    - name: Debug import_keys_result
+      ansible.builtin.debug:
+        var: import_keys_result.stderr_lines
+
+    - name: Verify lnd tarball
+      ansible.builtin.shell:
+        cmd: gpg --verify manifest-roasbeef-v{{ lnd_version }}.sig manifest-v{{ lnd_version }}.txt
+      args:
+        chdir: /tmp
+      register: verify_result
+      failed_when: "'Good signature' not in verify_result.stderr"
+
+    - name: Debug verify_result
+      ansible.builtin.debug:
+        var: verify_result.stderr_lines
+    become_user: "{{ ansible_user }}"
+
+  rescue:
+    - name: Cleanup
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+      - "/tmp/lnd-linux-amd64-v{{ lnd_version }}.tar.gz"
+      - "/tmp/manifest-v{{ lnd_version }}.txt"
+      - "/tmp/manifest-roasbeef-v{{ lnd_version }}.sig"
+  when: lnd_version_result is not failed or lnd_version != "latest"

@@ -1,0 +1,37 @@
+---
+- block:
+  - name: Install lnd
+    ansible.builtin.shell:
+      cmd: |
+        tar xzf lnd-linux-amd64-v{{ lnd_version }}.tar.gz -C /usr/bin --strip-components=1
+    args:
+      chdir: /tmp
+    register: install_result
+
+  - name: Create directories
+    ansible.builtin.file:
+      path: /etc/lnd
+      state: directory
+      owner: lnd
+      group: lnd
+      mode: '0755'
+
+  - name: Download lnd config
+    ansible.builtin.get_url:
+      url: https://raw.githubusercontent.com/lightningnetwork/lnd/master/sample-lnd.conf
+      dest: /etc/lnd/lnd.conf
+  when: verify_result is not failed
+
+- name: Cleanup
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+  - "/tmp/lnd-linux-amd64-v{{ lnd_version }}.tar.gz"
+  - "/tmp/manifest-v{{ lnd_version }}.txt"
+  - "/tmp/manifest-roasbeef-v{{ lnd_version }}.sig"
+
+- name: Remove build deps
+  community.general.apk:
+    name: "{{ lnd_build_deps | join(',') }}"
+    state: absent

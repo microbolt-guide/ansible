@@ -1,0 +1,52 @@
+---
+- block:
+  - name: Get version number of latest nostr release
+    ansible.builtin.shell:
+      cmd: wget -qO- 'https://api.github.com/repos/scsibug/nostr-rs-relay/tags' | grep '"name":' | cut -d'"' -f4 | head -n 1
+    register: nostr_version_result
+
+  - name: Set nostr_version fact
+    set_fact:
+      nostr_version: "{{ nostr_version_result.stdout }}"
+  when: nostr_version == "latest"
+
+- block:
+  - name: Create nostr system group
+    ansible.builtin.group:
+      system: true
+      name: nostr
+      state: present
+
+  - name: Create nostr system user
+    ansible.builtin.user:
+      system: true
+      password: "!"
+      create_home: false
+      home: /dev/null
+      shell: /sbin/nologin
+      group: nostr
+      comment: "nostr"
+      name: nostr
+      state: present
+
+  - name: Add user {{ ansible_user }} to nostr group
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups: nostr
+      append: true
+      state: present
+
+  - name: Download nostr repository
+    ansible.builtin.shell:
+      cmd: git clone --branch {{ nostr_version }} https://git.sr.ht/~gheartsfield/nostr-rs-relay
+    args:
+      chdir: /tmp
+    become_user: "{{ ansible_user }}"
+    register: clone_result
+
+  rescue:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/nostr-rs-relay"
+  when: nostr_version_result is not failed or nostr_version != "latest"

@@ -1,0 +1,13 @@
+{
+	"description": "Allow Umbrel Nostr Relay webGUI SSL",
+
+	"filter": [
+		{
+			"in": "internet",
+			"out": "_fw",
+			"service": { "proto": "tcp", "port": {{ umbrel_port_ssl }} },
+			"action": "accept",
+			"conn-limit": { "count": 10, "interval": 60 }
+		}
+	]
+}

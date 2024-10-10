@@ -1,0 +1,7 @@
+---
+- name: Allow Thunderhub
+  community.general.ufw:
+    rule: limit
+    port: "{{ thunderhub_port_ssl }}"
+    proto: tcp
+    comment: "Allow ThunderHub SSL"

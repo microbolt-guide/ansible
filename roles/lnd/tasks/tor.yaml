@@ -1,0 +1,20 @@
+---
+- name: Add Hidden Service LND REST server configuration
+  ansible.builtin.blockinfile:
+    path: /etc/tor/torrc
+    insertafter: '## This section is just for location-hidden services ##'
+    block: |
+      # Hidden Service LND REST
+      HiddenServiceDir /var/lib/tor/lnd-rest/
+      HiddenServiceVersion 3
+      HiddenServicePoWDefensesEnabled 1
+      HiddenServicePort 443 127.0.0.1:{{ lnd_rest_port_ssl }}
+
+- name: Get the LND REST Onion address
+  ansible.builtin.command:
+    cmd: cat /var/lib/tor/lnd-rest/hostname
+  register: lnd_rest_onion_address
+
+- name: Display LND REST Onion address
+  ansible.builtin.debug:
+    msg: "LND REST Onion address: {{ lnd_rest_onion_address.stdout }}"

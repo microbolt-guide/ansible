@@ -1,0 +1,66 @@
+---
+- block:
+  - name: Compile nostr-rs-relay
+    ansible.builtin.shell:
+      cmd: |
+        ash -lc '\
+        cargo auditable build \
+            --bin nostr-rs-relay \
+            --release \
+            --locked \
+            --jobs "$(nproc)"
+        '
+    args:
+      chdir: /tmp/nostr-rs-relay
+    register: compile_result
+  become_user: "{{ ansible_user }}"
+  when: clone_result is not failed
+
+  rescue:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/nostr-rs-relay"
+
+- block:
+  - name: Install nostr-rs-relay binary
+    ansible.builtin.copy:
+      src: /tmp/nostr-rs-relay/target/release/nostr-rs-relay
+      dest: /usr/bin/nostr-rs-relay
+      owner: root
+      group: root
+      mode: '0755'
+      remote_src: yes
+
+  - name: Ensure /etc/nostr-rs-relay directory exists
+    ansible.builtin.file:
+      path: /etc/nostr-rs-relay
+      state: directory
+      owner: nostr
+      group: nostr
+      mode: '0755'
+
+  - name: Install nostr-rs-relay config
+    ansible.builtin.copy:
+      src: /tmp/nostr-rs-relay/config.toml
+      dest: /etc/nostr-rs-relay/config.toml
+      owner: nostr
+      group: nostr
+      mode: '0660'
+      remote_src: yes
+
+  - name: Strip binaries
+    ansible.builtin.shell:
+      cmd: strip /usr/bin/nostr-rs-relay
+  when: compile_result is not failed
+
+  always:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/nostr-rs-relay"
+
+    - name: Remove build deps
+      community.general.apk:
+        name: "{{ nostr_build_deps | join(',') }}"
+        state: absent

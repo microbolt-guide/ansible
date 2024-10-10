@@ -1,0 +1,101 @@
+---
+- block:
+  - name: Get version number of latest thunderhub release
+    ansible.builtin.shell:
+      cmd: wget -qO- 'https://api.github.com/repos/apotdevin/thunderhub/releases/latest' | grep '"tag_name":' | cut -d'"' -f4 | sed 's/^v//'
+    register: thunderhub_version_result
+
+  - name: Set thunderhub_version fact
+    set_fact:
+      thunderhub_version: "{{ thunderhub_version_result.stdout }}"
+  when: thunderhub_version == "latest"
+
+- block:
+  - name: Create thunderhub system group
+    ansible.builtin.group:
+      system: true
+      name: thunderhub
+      state: present
+
+  - name: Create thunderhub system user
+    ansible.builtin.user:
+      system: true
+      password: "!"
+      create_home: false
+      home: /dev/null
+      shell: /sbin/nologin
+      group: thunderhub
+      comment: "thunderhub"
+      name: thunderhub
+      state: present
+
+  - name: Add user thunderhub to lnd group
+    ansible.builtin.user:
+      name: thunderhub
+      groups: lnd
+      append: true
+      state: present
+
+  - name: Add user {{ ansible_user }} to thunderhub group
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups: thunderhub
+      append: true
+      state: present
+
+  - name: Add user thunderhub to tor group
+    ansible.builtin.user:
+      name: thunderhub
+      groups: tor
+      append: true
+      state: present
+
+  # Firewall
+  - include_tasks: awall.yaml
+    when: firewall_role == 'awall'
+
+  - include_tasks: ufw.yaml
+    when: firewall_role == 'ufw'
+
+  # Reverse Proxy
+  - include_tasks: caddy.yaml
+    when: reverse_proxy_role == 'caddy'
+
+  - include_tasks: nginx.yaml
+    when: reverse_proxy_role == 'nginx'
+
+  - block:
+    - name: Download thunderhub repository
+      ansible.builtin.shell:
+        cmd: git clone --branch v{{ thunderhub_version }} https://github.com/apotdevin/thunderhub.git
+      args:
+        chdir: /tmp
+
+    - name: Import PGP keys from GitHub repository
+      ansible.builtin.shell:
+        cmd: wget -qO- "{{ thunderhub_keys_url }}" | gpg --import
+      register: import_keys_result
+
+    - name: Debug import_keys_result
+      ansible.builtin.debug:
+        var: import_keys_result.stderr_lines
+
+    - name: Verify thunderhub tag
+      ansible.builtin.shell:
+        cmd: git verify-commit v{{ thunderhub_version }}
+      args:
+        chdir: /tmp/thunderhub
+      register: verify_result
+      failed_when: "'Good signature' not in verify_result.stderr"
+
+    - name: Debug verify_result
+      ansible.builtin.debug:
+        var: verify_result.stderr_lines
+    become_user: "{{ ansible_user }}"
+
+  rescue:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: /tmp/thunderhub
+  when: thunderhub_version_result is not failed or thunderhub_version != "latest"

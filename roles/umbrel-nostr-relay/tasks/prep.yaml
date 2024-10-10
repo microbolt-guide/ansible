@@ -1,0 +1,74 @@
+---
+- block:
+  - name: Get version number of latest umbrel release
+    ansible.builtin.shell:
+      cmd: wget -qO- 'https://api.github.com/repos/getumbrel/umbrel-nostr-relay/tags' | grep '"name":' | cut -d'"' -f4 | head -n 1
+    register: umbrel_version_result
+
+  - name: Set umbrel_version fact
+    set_fact:
+      umbrel_version: "{{ umbrel_version_result.stdout }}"
+  when: umbrel_version == "latest"
+
+- block:
+  - name: Create umbrel system group
+    ansible.builtin.group:
+      system: true
+      name: umbrel
+      state: present
+
+  - name: Create umbrel system user
+    ansible.builtin.user:
+      system: true
+      password: "!"
+      create_home: false
+      home: /dev/null
+      shell: /sbin/nologin
+      group: umbrel
+      comment: "umbrel"
+      name: umbrel
+      state: present
+
+  - name: Add user {{ ansible_user }} to umbrel group
+    ansible.builtin.user:
+      name: "{{ ansible_user }}"
+      groups: umbrel
+      append: true
+      state: present
+
+  - name: Add user umbrel to tor group
+    ansible.builtin.user:
+      name: umbrel
+      groups: tor
+      append: true
+      state: present
+
+  # Firewall
+  - include_tasks: awall.yaml
+    when: firewall_role == 'awall'
+
+  - include_tasks: ufw.yaml
+    when: firewall_role == 'ufw'
+
+  # Reverse Proxy
+  - include_tasks: caddy.yaml
+    when: reverse_proxy_role == 'caddy'
+
+  - include_tasks: nginx.yaml
+    when: reverse_proxy_role == 'nginx'
+
+  - block:
+    - name: Download umbrel repository
+      ansible.builtin.shell:
+        cmd: git clone --branch {{ umbrel_version }} https://github.com/getumbrel/umbrel-nostr-relay.git
+      args:
+        chdir: /tmp
+      register: clone_result
+    become_user: "{{ ansible_user }}"
+
+  rescue:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/umbrel-nostr-relay"
+  when: umbrel_version_result is not failed or umbrel_version != "latest"

@@ -1,0 +1,22 @@
+---
+- block:
+  - name: Nostr-rs-relay configuration
+    ansible.builtin.lineinfile:
+      path: /etc/nostr-rs-relay/config.toml
+      regexp: '^#?\s*{{ item.lstrip("#").split("=")[0] | regex_escape }}\s*='
+      line: "{{ item }}"
+      state: present
+    loop: "{{ nostr_config_options }}"
+
+  - name: Nostr-rs-relay logrotate script
+    ansible.builtin.template:
+      src: logrotate.j2
+      dest: /etc/logrotate.d/nostr-rs-relay
+      mode: '0644'
+  
+  - name: Nostr-rs-relay init script
+    ansible.builtin.template:
+      src: init.j2
+      dest: /etc/init.d/nostr-rs-relay
+      mode: '0755'
+  when: compile_result is not failed

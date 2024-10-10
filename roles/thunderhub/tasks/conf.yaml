@@ -1,0 +1,33 @@
+---
+- block:
+  - name: Thunderhub configuration
+    ansible.builtin.copy:
+      dest: /etc/thunderhub/thubConfig.yaml
+      content: |
+        masterPassword: '{{ thunderhub_config_options.masterPassword }}'
+        healthCheckPingEnabled: {{ thunderhub_config_options.healthCheckPingEnabled }}
+        backupsEnabled: {{ thunderhub_config_options.backupsEnabled }}
+        accounts:
+        {% for account in thunderhub_config_options.accounts %}
+          - name: '{{ account.name }}'
+            serverUrl: '{{ account.serverUrl }}'
+            macaroonPath: '{{ account.macaroonPath }}'
+            certificatePath: '{{ account.certificatePath }}'
+            password: '{{ account.password }}'
+        {% endfor %}
+
+  - include_tasks: tor.yaml
+    when: tor_thunderhub
+
+  - name: Thunderhub logrotate script
+    ansible.builtin.template:
+      src: logrotate.j2
+      dest: /etc/logrotate.d/thunderhub
+      mode: '0644'
+  
+  - name: Thunderhub init script
+    ansible.builtin.template:
+      src: init.j2
+      dest: /etc/init.d/thunderhub
+      mode: '0755'
+  when: install_result is not failed

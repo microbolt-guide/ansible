@@ -1,0 +1,28 @@
+---
+- block:
+  - name: LND configuration
+    ansible.builtin.lineinfile:
+      path: /etc/lnd/lnd.conf
+      regexp: '^; *{{ item.split("=")[0] }}='
+      line: '{{ item }}'
+      state: present
+    loop: "{{ lnd_config_options }}"
+
+  - include_tasks: tor.yaml
+    when: tor_lnd_rest and lnd_rest_connect
+
+  - name: LND wallet password
+    ansible.builtin.copy:
+      dest: /etc/lnd/passwd.txt
+      mode: 0600
+      owner: lnd
+      group: lnd
+      content: "{{ lnd_wallet_password }}"
+    when: lnd_wallet_password is defined
+  
+  - name: LND init script
+    ansible.builtin.template:
+      src: init.j2
+      dest: /etc/init.d/lnd
+      mode: '0755'
+  when: install_result is not failed

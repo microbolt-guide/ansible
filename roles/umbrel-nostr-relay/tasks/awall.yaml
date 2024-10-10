@@ -1,0 +1,14 @@
+---
+- name: Deploy awall configuration
+  ansible.builtin.template:
+    src: templates/awall.j2
+    dest: /etc/awall/optional/umbrel-nostr-relay.json
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable umbrel-nostr-relay policy
+  community.general.awall:
+    name: umbrel-nostr-relay
+    state: enabled
+    activate: true

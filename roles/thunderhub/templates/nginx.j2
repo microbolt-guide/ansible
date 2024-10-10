@@ -1,0 +1,8 @@
+server {
+  listen {{ thunderhub_port_ssl }} ssl;
+  error_page 497 =301 https://$host:$server_port$request_uri;
+
+  location / {
+    proxy_pass http://127.0.0.1:{{ thunderhub_port_tcp }};
+  }
+}

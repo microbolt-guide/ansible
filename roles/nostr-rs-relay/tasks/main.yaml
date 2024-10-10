@@ -1,0 +1,15 @@
+---
+# Dependencies
+- include_tasks: deps.yaml
+# Preparation, firewall and reverse proxy
+- include_tasks: prep.yaml
+# Installation
+- include_tasks: inst.yaml
+# Configuration and start service
+- include_tasks: conf.yaml
+
+
+- name: Include umbrel-nostr-relay role
+  ansible.builtin.include_role:
+    name: umbrel-nostr-relay
+  when: nostr_web_app

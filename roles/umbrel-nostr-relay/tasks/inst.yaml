@@ -1,0 +1,121 @@
+---
+- name: backend
+  block:
+    - name: Install backend dependencies
+      community.general.npm:
+        ci: true
+        production: true
+        path: /tmp/umbrel-nostr-relay/relay-proxy
+
+    - name: Install backend globally
+      block:
+        - name: Create directories
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: directory
+            owner: umbrel
+            group: umbrel
+            mode: '0755'
+          loop:
+            - /tmp/umbrel-nostr-relay/relay-proxy/bin
+            - /etc/umbrel-nostr-relay
+          loop_control:
+            loop_var: item
+        - name: Create cli.sh
+          ansible.builtin.copy:
+            dest: /tmp/umbrel-nostr-relay/relay-proxy/bin/cli.sh
+            mode: a+x
+            content: |
+              #!/bin/sh
+              node $@ /var/lib/umbrel-nostr-relay/server
+
+        - name: Replace port definition in server.js
+          ansible.builtin.lineinfile:
+            path: /tmp/umbrel-nostr-relay/relay-proxy/server.js
+            regexp: '^const port = 80;'
+            line: 'const port = process.env.RELAY_PROXY_PORT || 80;'
+            backup: yes
+
+        - name: Replace store definition in constants.js
+          ansible.builtin.lineinfile:
+            path: /tmp/umbrel-nostr-relay/relay-proxy/constants.js
+            regexp: '^export const STORE = "\./data/store.json";'
+            line: 'export const STORE = process.env.RELAY_DATA_STORE || "./data/store.json";'
+            backup: yes
+
+        - name: Copy files
+          ansible.builtin.copy:
+            src: /tmp/umbrel-nostr-relay/relay-proxy/
+            dest: /var/lib/umbrel-nostr-relay
+            owner: root
+            group: root
+            mode: '0755'
+            remote_src: yes
+        - name: Link files
+          ansible.builtin.file:
+            src: /var/lib/umbrel-nostr-relay
+            path: /usr/lib/node_modules/umbrel-nostr-relay
+            state: link
+        - ansible.builtin.file:
+            src: ../lib/node_modules/umbrel-nostr-relay/bin/cli.sh
+            path: /usr/bin/umbrel-nostr-relay
+            state: link
+            force: true
+            follow: false
+  when: clone_result is not failed
+
+  rescue:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/umbrel-nostr-relay"
+
+- name: frontend
+  block:
+    - name: Install frontend dependencies
+      community.general.npm:
+        ci: true
+        path: /tmp/umbrel-nostr-relay/ui
+
+    - name: Replace "Umbrel" with "Microbolt" in public/index.html
+      ansible.builtin.replace:
+        path: /tmp/umbrel-nostr-relay/ui/public/index.html
+        regexp: 'Umbrel'
+        replace: 'Microbolt'
+        backup: yes
+
+    - name: Replace and remove specific lines in src/components/ConnectClient.js
+      ansible.builtin.shell: |
+        sed -e 's/{ relayPort }//' \
+            -e '/<p className="text-slate-800 dark:text-slate-400 text-xs mt-4 mb-6">/,/<\/p>/d' \
+            src/components/ConnectClient.js > _
+        mv -f _ src/components/ConnectClient.js
+      args:
+        chdir: /tmp/umbrel-nostr-relay/ui
+
+    - name: Build frontend
+      ansible.builtin.shell:
+        cmd: npm run build
+        chdir: /tmp/umbrel-nostr-relay/ui
+      register: build_result
+    
+    - name: Install frontend globally
+      ansible.builtin.copy:
+        src: /tmp/umbrel-nostr-relay/ui/build/
+        dest: /var/www/umbrel-nostr-relay
+        owner: root
+        group: root
+        mode: '0755'
+        remote_src: yes
+  when: clone_result is not failed
+
+  always:
+    - name: Cleanup
+      ansible.builtin.file:
+        state: absent
+        path: "/tmp/umbrel-nostr-relay"
+
+    - name: Remove build deps
+      community.general.apk:
+        name: "{{ umbrel_build_deps | join(',') }}"
+        state: absent

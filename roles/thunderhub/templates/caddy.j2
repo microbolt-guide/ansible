@@ -1,0 +1,11 @@
+:{{ thunderhub_port_ssl }} {
+        import tls
+
+        handle_errors 497 {
+                redir https://{host}:{port}{uri} 301
+        }
+
+        handle {
+                reverse_proxy 127.0.0.1:{{ thunderhub_port_tcp }}
+        }
+}

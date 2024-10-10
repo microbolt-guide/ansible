@@ -1,0 +1,14 @@
+---
+- name: Deploy awall configurations
+  ansible.builtin.template:
+    src: templates/awall.j2
+    dest: /etc/awall/optional/lnd-rest.json
+    owner: root
+    group: root
+    mode: '0644'
+
+- name: Enable lnd-rest policies
+  community.general.awall:
+    name: lnd-rest
+    state: enabled
+    activate: true

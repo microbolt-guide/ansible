@@ -1,0 +1,5 @@
+:{{ lnd_rest_port_ssl }} {
+        route {
+                proxy 127.0.0.1:{{ lnd_rest_port_tcp }}
+        }
+}

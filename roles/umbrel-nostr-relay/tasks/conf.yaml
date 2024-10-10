@@ -1,0 +1,25 @@
+---
+- block:
+  - name: Create umbrel.env
+    ansible.builtin.copy:
+      dest: /etc/umbrel-nostr-relay/umbrel.env
+      content: |
+        {% for option in umbrel_config_options %}
+        {{ option }}
+        {% endfor %}
+
+  - include_tasks: tor.yaml
+    when: tor_umbrel_nostr
+
+  - name: Mempool logrotate script
+    ansible.builtin.template:
+      src: logrotate.j2
+      dest: /etc/logrotate.d/umbrel-nostr-relay
+      mode: '0644'
+  
+  - name: Mempool init script
+    ansible.builtin.template:
+      src: init.j2
+      dest: /etc/init.d/umbrel-nostr-relay
+      mode: '0755'
+  when: build_result is not failed

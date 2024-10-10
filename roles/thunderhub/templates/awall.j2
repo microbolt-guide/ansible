@@ -1,0 +1,13 @@
+{
+  "description": "Allow ThunderHub SSL",
+ 
+  "filter": [
+    {
+      "in": "internet",
+      "out": "_fw",
+      "service": { "proto": "tcp", "port": {{ thunderhub_port_ssl }} },
+      "action": "accept",
+      "conn-limit": { "count": 10, "interval": 60 }
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+---
+- name: Allow Allow LND rest
+  community.general.ufw:
+    rule: limit
+    port: "{{ lnd_rest_port_ssl }}"
+    proto: tcp
+    comment: "Allow Allow LND rest SSL"

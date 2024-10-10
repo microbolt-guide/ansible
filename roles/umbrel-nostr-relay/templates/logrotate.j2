@@ -1,0 +1,13 @@
+/var/log/umbrel-nostr-relay/*.log {
+		weekly
+		missingok
+		rotate 104
+		compress
+		delaycompress
+		notifempty
+		create 0640 umbrel umbrel
+		sharedscripts
+		postrotate
+				killall -HUP `cat /run/umbrel-nostr-relay/umbrel-nostr-relay.pid`
+		endscript
+}

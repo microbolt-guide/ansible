@@ -26,6 +26,9 @@ tor_electrum: false
 tor_btcrpc: false
 tor_mempool: false
 tor_public_pool: false
+tor_lnd_rest: false
+tor_thunderhub: false
+tor_umbrel_nostr: false
 
 # Bitcoin options
 bitcoin_version: latest # latest or specific version
@@ -47,7 +50,7 @@ btcrpc_theme: dark # dark or light
 btcrpc_slow_device_mode: false
 btcrpc_privacy_mode: true
 btcrpc_security_mode: false
-btcrpc_password: passwd # only if security_mode is true
+btcrpc_password: passwd # necessary if btcrpc_security_mode is true
 
 # Mempool options
 mempool_version: latest # latest or specific version
@@ -64,9 +67,34 @@ public_pool_api_port: 23334
 public_pool_stratum_port: 23333
 
 # Lightning options
+lnd_version: latest # latest or specific version
+lnd_alias: Microbolt
+lnd_wallet_password: passwd
 lnd_slow_device_mode: false
+lnd_web_app: true # enable web app. Installs thunderhub
+lnd_rest_connect: true # connect with external services, e.g. Zeus Mobile Wallet
+lnd_rest_port_tcp: 8080
+lnd_rest_port_ssl: 8081
+
+# Thunderhub options
+thunderhub_version: latest # latest or specific version
+thunderhub_port_tcp: 3000
+thunderhub_port_ssl: 4002
+thunderhub_master_password: PASSWORD # Default password unless defined in account
+thunderhub_autohealthcheck: false
+thunderhub_autobackups: false
+thunderhub_username: Microbolt
+thunderhub_password: passwd
 
 # Nostr options
+nostr_version: latest # latest or specific version
+nostr_port_tcp: 8880
+nostr_web_app: true # enable web app. Installs umbrel-nostr-relay
+
+# Umbrel Nostr Relay options
+umbrel_version: latest # latest or specific version
+umbrel_port_ssl: 8881
+umbrel_port_proxy: 81
 
 ################################################################################
 # DO NOT EDIT BELOW THIS LINE UNLESS YOU KNOW WHAT YOU ARE DOING               #
@@ -286,22 +314,99 @@ public_pool_config_options:
   - POOL_IDENTIFIER="microbolt"
 
 # Lightning options
+lnd_base_url: https://github.com/lightningnetwork/lnd/releases/download/v{{ lnd_version }}
 lnd_keys_url: https://raw.githubusercontent.com/lightningnetwork/lnd/master/scripts/keys/roasbeef.asc
 lnd_build_deps:
-  - git
-  - go
   - gnupg
-  - make
+#lnd_runtime_deps: null
+lnd_config_options:
+  - tlsautorefresh=true
+  - tlsdisableautofill=true
+  - listen=127.0.0.1
+  - "{% if lnd_rest_connect %}restlisten=localhost:{{ lnd_rest_port_tcp }}{% endif %}"
+  - debuglevel=info
+  - maxpendingchannels=5
+  - wallet-unlock-password-file=/etc/lnd/passwd.txt
+  - wallet-unlock-allow-create=true
+  - minchansize=100000
+  - coop-close-target-confs=24
+  - ignore-historical-gossip-filters=1
+  - stagger-initial-reconnect=true
+  - accept-keysend=true
+  - accept-amp=true
+  - gc-canceled-invoices-on-startup=true
+  - gc-canceled-invoices-on-the-fly=true
+  - alias={{ lnd_alias }}
+  - bitcoin.active=true
+  - bitcoin.chaindir=/var/lib/lnd/chain/bitcoin
+  - bitcoin.mainnet=true
+  - bitcoin.node=bitcoind
+  - bitcoin.basefee=1000
+  - bitcoin.feerate=1
+  - bitcoind.dir=/var/lib/bitcoind
+  - bitcoind.config=/etc/bitcoin/bitcoin.conf
+  - bitcoind.rpccookie=/var/lib/bitcoind/.cookie
+  - bitcoind.zmqpubrawblock=tcp://127.0.0.1:28332
+  - bitcoind.zmqpubrawtx=tcp://127.0.0.1:28333
+  - tor.active=true
+  - tor.streamisolation=true
+  - tor.v3=true
+  - watchtower.active={{ not lnd_slow_device_mode | lower }}
+  - wtclient.active=true
+  - protocol.wumbo-channels=true
+  - protocol.simple-taproot-chans=true
+  - db.bolt.auto-compact=true
+  - db.bolt.auto-compact-min-age=168h
+
+# Thunderhub options
+thunderhub_keys_url: https://github.com/apotdevin.gpg
+thunderhub_build_deps:
+  - git
+  - gnupg
+  - npm
+thunderhub_runtime_deps:
+  - nodejs-current
+thunderhub_config_options:
+  masterPassword: '{{ thunderhub_master_password }}' # Default password unless defined in account
+  healthCheckPingEnabled: "{{ thunderhub_autohealthcheck }}"
+  backupsEnabled: "{{ thunderhub_autobackups }}"
+  accounts:
+    - name: '{{ thunderhub_username }}'
+      serverUrl: '127.0.0.1:10009'
+      macaroonPath: '/var/lib/lnd/data/chain/bitcoin/mainnet/admin.macaroon'
+      certificatePath: '/var/lib/lnd/tls.cert'
+      password: '{{ thunderhub_password }}'
 
 # Nostr options
-nostr_keys_url:
+#nostr_keys_url:
 nostr_build_deps:
+  - cargo
+  - cargo-auditable
+  - clang-dev
+  - cmake
   - git
-  - go
-  - gnupg
   - make
+  - pkgconf
+  - protobuf-c-compiler
+  - sqlite-dev
 nostr_runtime_deps:
-  - nodejs-current
+  - sqlite
 nostr_config_options:
-  - NOSTR_RPC_PORT=8080
-  - NOSTR_RPC_HOST=
+  - "#relay_url = \"wss://nostr.example.com/\""
+  - "name = \"Microbolt Nostr Relay\""
+  - "description = \"A Nostr Relay running on Microbolt\""
+  - "address = \"127.0.0.1\""
+  - "port = {{ nostr_port_tcp }}"
+
+# Umbrel Nostr Relay options
+#umbrel_keys_url:
+umbrel_build_deps:
+  - git
+  - npm
+umbrel_runtime_deps:
+  - nodejs-current
+umbrel_config_options:
+  - RELAY_HOST=127.0.0.1
+  - RELAY_PORT={{ nostr_port_tcp }}
+  - RELAY_PROXY_PORT={{ umbrel_port_proxy }}
+  - RELAY_DATA_STORE=/etc/umbrel-nostr-relay/store.json

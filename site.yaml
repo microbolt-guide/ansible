@@ -60,3 +60,20 @@
       ansible.builtin.include_role:
         name: public_pool
       when: pool_role | default(false)
+
+- name: Install lightning
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Include the lightning role
+      ansible.builtin.include_role:
+        name: "{{ lightning_role }}"
+
+- name: Install nostr
+  hosts: all
+  gather_facts: true
+  tasks:
+    - name: Include the nostr role
+      ansible.builtin.include_role:
+        name: nostr-rs-relay
+      when: nostr_role | default(false)

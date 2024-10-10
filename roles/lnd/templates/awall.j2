@@ -1,0 +1,13 @@
+{
+  "description": "Allow LND rest SSL",
+ 
+  "filter": [
+    {
+      "in": "internet",
+      "out": "_fw",
+      "service": { "proto": "tcp", "port": {{ lnd_rest_port_ssl }} },
+      "action": "accept",
+      "conn-limit": { "count": 10, "interval": 60 }
+    }
+  ]
+}
