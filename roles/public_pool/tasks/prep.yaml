@@ -32,13 +32,6 @@
       append: true
       state: present
 
-  - name: Add user public-pool to tor group
-    ansible.builtin.user:
-      name: public-pool
-      groups: tor
-      append: true
-      state: present
-
   # Firewall
   - include_tasks: awall.yaml
     when: firewall_role == 'awall'

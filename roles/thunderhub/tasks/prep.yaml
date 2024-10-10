@@ -43,13 +43,6 @@
       append: true
       state: present
 
-  - name: Add user thunderhub to tor group
-    ansible.builtin.user:
-      name: thunderhub
-      groups: tor
-      append: true
-      state: present
-
   # Firewall
   - include_tasks: awall.yaml
     when: firewall_role == 'awall'

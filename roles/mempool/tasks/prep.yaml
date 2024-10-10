@@ -43,13 +43,6 @@
       append: true
       state: present
 
-  - name: Add user mempool to tor group
-    ansible.builtin.user:
-      name: mempool
-      groups: tor
-      append: true
-      state: present
-
   - name: Add user mempool to redis group
     ansible.builtin.user:
       name: mempool
