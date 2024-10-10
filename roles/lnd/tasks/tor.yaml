@@ -8,7 +8,7 @@
       HiddenServiceDir /var/lib/tor/lnd-rest/
       HiddenServiceVersion 3
       HiddenServicePoWDefensesEnabled 1
-      HiddenServicePort 443 127.0.0.1:{{ lnd_rest_port_ssl }}
+      HiddenServicePort {{ lnd_rest_port_ssl }} 127.0.0.1:{{ lnd_rest_port_ssl }}
 
 - name: Get the LND REST Onion address
   ansible.builtin.command:
